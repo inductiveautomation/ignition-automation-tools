@@ -1,3 +1,4 @@
+import math
 from typing import Union, Optional, Iterable
 
 from selenium.webdriver.support.color import Color
@@ -96,6 +97,33 @@ class IAAssert:
                 IAAssert._generate_failure_msg(msg=f'Assert {str(type(actual_value))} {actual_value} == '
                                                    f'{str(type(expected_value))} {expected_value}',
                                                failure_msg=failure_msg)
+
+    @staticmethod
+    def is_close_to(
+            actual_value: float,
+            expected_value: float,
+            decimal_places: int = 9,
+            failure_msg: Optional[str] = None):
+        """
+        Verify that two floating point values are close to one another, within a specified number of decimal places.
+        This is useful for verifying approximate equality while accounting for possible floating point imprecision.
+
+        :param actual_value: The actual value to be compared.
+        :param expected_value: The value that actual_value is expected to be close to.
+        :param decimal_places: The relative difference between the two values that we are willing to tolerate when
+            comparing them, in terms of decimal places (e.g. an argument of 3 asserts that the values are within 0.001
+            of each other)
+        :param failure_msg: Any custom failure message you'd like to supply to explain the impact or cause of a
+            potential assertion failure.
+
+        :raises AssertionError: If the provided values are not within the specified number of decimal places of one
+            another.
+        """
+        relative_tolerance = abs(1 / (pow(10, decimal_places)))
+        assert math.isclose(actual_value, expected_value, rel_tol=relative_tolerance), \
+            IAAssert._generate_failure_msg(
+                msg=f'Assert {actual_value} is within {decimal_places} decimal places of {expected_value}',
+                failure_msg=failure_msg)
 
     @staticmethod
     def is_greater_than(
