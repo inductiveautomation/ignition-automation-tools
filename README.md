@@ -22,7 +22,6 @@ Omitted components:
 6. Moving Analog Indicator
 7. PDF Viewer
 8. Sparkline
-9. Menu Tree
 
 ## Helpers:
 The Helpers contained in this repository allow for specialized interaction in the following areas of your testing:
