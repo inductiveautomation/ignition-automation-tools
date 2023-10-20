@@ -2,13 +2,15 @@ import json
 from json import JSONDecodeError
 from typing import List, Optional, Union, Tuple
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
+from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from Components.BasicComponent import ComponentPiece, BasicPerspectiveComponent
 from Components.PerspectiveComponents.Common.Dropdown import CommonDropdown
 from Helpers.CSSEnumerations import CSSPropertyValue
+from Helpers.IAAssert import IAAssert
 from Helpers.IAExpectedConditions import IAExpectedConditions as IAec
 from Helpers.Point import Point
 
@@ -102,8 +104,33 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
         Click the 'X' which would remove all selected options.
 
         :raises TimeoutException: If the clear all selected options 'X' is not present.
+        :raises AssertionError: If unsuccessful in removing all selected options.
         """
         self._clear_all_options.click(wait_timeout=1)
+        IAAssert.is_equal_to(
+            actual_value=len(self.get_selected_options_as_list()),
+            expected_value=0,
+            failure_msg="The dropdown still had options selected after we attempted to remove all selections.")
+
+    def clear_search_field(self) -> None:
+        """
+        Remove any text from the search field of the Dropdown.
+
+        :raises AssertionError: If unsuccessful in removing all text from the search field.
+        """
+        if not self.is_expanded():
+            self.expand()
+        else:
+            try:
+                self._search_input.click()
+            except ElementNotInteractableException:
+                pass  # If the search input already has focus and no text it has no dimensions
+        current_text = self._search_input.find().get_attribute("value")
+        self._search_input.find().send_keys([Keys.BACKSPACE for _ in current_text])
+        IAAssert.is_equal_to(
+            actual_value=self._search_input.find().get_attribute("value"),
+            expected_value=""
+        )
 
     def clear_selected_option(self, option_text: str) -> None:
         """
@@ -111,6 +138,7 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
 
         :raises TimeoutException: if not using a multi-select Dropdown component, or if no option with matching text
             is currently selected.
+        :raises AssertionError: If unsuccessful in removing the specified option from the current selection.
         """
         option_clear_link = self._displayed_selected_options.get(option_text)
         if not option_clear_link:
@@ -121,13 +149,10 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
                 poll_freq=self.poll_freq)
             self._displayed_selected_options[option_text] = option_clear_link
         option_clear_link.click()
-
-    def collapse_if_expanded(self) -> None:
-        """
-        Collapse the Dropdown if it is currently active. Does NOT remove focus from the Dropdown.
-        """
-        if self.is_expanded():
-            self.toggle_expansion()
+        IAAssert.does_not_contain(
+            iterable=self.get_selected_options_as_list(),
+            expected_value=option_text,
+            failure_msg="Failed to remove selected option from multi-select Dropdown.")
 
     def get_common_container_css_property(self, property_name: Union[CSSPropertyValue, str]) -> str:
         """Obtain a CSS property value from the main container of the Dropdown."""
@@ -166,10 +191,10 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
         :returns: a specific CSS property value of the options modal, distinct from the main Dropdown container.
         """
         try:
-            self.expand_if_collapsed()
+            self.expand()
             return self._available_options.get_css_property(property_name=property_name)
         finally:
-            self.collapse_if_expanded()
+            self.collapse()
 
     def get_no_results_modal_css_property(self, property_name: Union[CSSPropertyValue, str]) -> str:
         """
@@ -180,10 +205,10 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
         :raises TimeoutException: If the 'No Results' modal is not displayed.
         """
         try:
-            self.expand_if_collapsed()
+            self.expand()
             return self._no_results_modal.get_css_property(property_name=property_name)
         finally:
-            self.collapse_if_expanded()
+            self.collapse()
 
     def get_origin_of_search_input(self) -> Point:
         """
@@ -259,11 +284,11 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
             element is the height.
         """
         try:
-            self.expand_if_collapsed()
+            self.expand()
             return self._available_options.get_computed_width(include_units=False), \
                 self._available_options.get_computed_height(include_units=False)
         finally:
-            self.collapse_if_expanded()
+            self.collapse()
 
     def insert_custom_option(self, custom_option_text: str) -> None:
         """
@@ -275,12 +300,12 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
         :raises TimeoutException: If the Dropdown does not allow for custom options.
         """
         try:
-            self.expand_if_collapsed()
+            self.expand()
             self._search_input.find().send_keys(custom_option_text)
             # The "create" option actually has a data-label attribute of "Create", regardless of the option text
             self._get_option(option_text=f"Create: {custom_option_text}").click()
         finally:
-            self.collapse_if_expanded()
+            self.collapse()
 
     def option_has_focus(self, option_text: str) -> bool:
         """
@@ -317,10 +342,11 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
             continue.
 
         :raises TimeoutException: If no option with the supplied text exists as an option.
+        :raises AssertionError: If unsuccessful in selecting the specified option.
         """
+        option_text = str(option_text)
         if option_text not in self.get_selected_options_as_list():
-            self.scroll_to_element()
-            self.expand_if_collapsed()
+            self.expand()
             if not self.option_is_visible_within_option_modal(option_text=option_text):
                 # Selenium occasionally has issues when scrolling the options modal, so attempt to filter the displayed
                 # options first
@@ -335,7 +361,11 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
                 toe.msg = f"Failed to locate element with text of \"{option_text}\"."
                 raise toe
             finally:
-                self.collapse_if_expanded()
+                self.collapse()
+        IAAssert.contains(
+            iterable=self.get_selected_options_as_list(),
+            expected_value=option_text,
+            failure_msg="Failed to select option in Dropdown.")
 
     def selected_options_are_in_pills(self) -> bool:
         """
@@ -353,10 +383,20 @@ class Dropdown(CommonDropdown, BasicPerspectiveComponent):
         :param search_text: The text to supply to the Dropdown in an attempt to filter the displayed options.
 
         :raises TimeoutException: If the Dropdown does not allow for searching.
+        :raises AssertionError: If unsuccessful in applying the supplied search text (for alpha-numeric searches).
         """
         # Searching not allowed in CommonDropdown
-        self.click(binding_wait_time=0.5)
+        self.clear_search_field()
+        self.expand()
+        search_text = str(search_text)
         self._search_input.find().send_keys(search_text)
+        chars_to_trim = [Keys.BACKSPACE, Keys.ARROW_DOWN, Keys.ARROW_UP, Keys.ENTER]  # NOT Space though
+        for invalid_char in chars_to_trim:
+            search_text = search_text.strip(invalid_char)
+        IAAssert.is_equal_to(
+            actual_value=self._search_input.find().get_attribute("value"),
+            expected_value=search_text,
+            failure_msg="Failed to search for option within the Dropdown.")
 
     def _option_has_focus(self, option_text: str) -> bool:
         """

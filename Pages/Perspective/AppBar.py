@@ -314,6 +314,14 @@ class AppBar(PagePiece):
         # some tests check button appearance after click, so let the button have time to change color
         self._about_button.click(binding_wait_time=1)
 
+    def click_learn_more_about_ignition_button(self) -> None:
+        """
+        Click the "Learn More About Ignition" button in the About modal. Note that this opens the Inductive Automation
+        home page in a new browser tab.
+        """
+        self._open_about_modal_if_not_open()
+        self._learn_more_button.click()
+
     def click_sign_in_button(self) -> None:
         """
         Click the "Sign In" button.

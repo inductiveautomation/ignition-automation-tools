@@ -23,7 +23,6 @@ class PerspectivePageObject(IgnitionPageObject):
         'error-pie',
         'ia-xy-error'
     ]
-    configured_page_title = None
 
     class ComponentContextMenu(BasicComponent):
         _ITEM_LOCATOR = (By.CSS_SELECTOR, "div.menu-item.ia_componentContextMenu__item")

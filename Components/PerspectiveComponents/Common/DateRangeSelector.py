@@ -451,7 +451,8 @@ class CommonDateRangeSelector(ComponentModal):
                     failure_msg="Failed to set the minutes for the end time.")
             if date.am_pm and date.am_pm is not None:
                 IAAssert.is_equal_to(
-                    actual_value=Select(webelement=self._end_time_am_pm_select.find()).first_selected_option.text.upper(),
+                    actual_value=Select(
+                        webelement=self._end_time_am_pm_select.find()).first_selected_option.text.upper(),
                     expected_value=date.am_pm.upper(),
                     as_type=str,
                     failure_msg="Failed to set AM/PM for the end time.")
@@ -531,7 +532,8 @@ class CommonDateRangeSelector(ComponentModal):
                     failure_msg="Failed to set the minutes for the start time.")
             if am_pm_found and date.am_pm is not None:
                 IAAssert.is_equal_to(
-                    actual_value=Select(webelement=self._start_time_am_pm_select.find()).first_selected_option.text.upper(),
+                    actual_value=Select(
+                        webelement=self._start_time_am_pm_select.find()).first_selected_option.text.upper(),
                     expected_value=date.am_pm.upper(),
                     as_type=str,
                     failure_msg="Failed to set AM/PM for the start time.")

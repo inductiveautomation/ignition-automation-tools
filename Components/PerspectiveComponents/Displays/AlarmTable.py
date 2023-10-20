@@ -30,8 +30,6 @@ class AlarmTableColumn:
     An Alarm Table Column definition, which contains insight into both the name of the column, as well as the id
     used to designate that column in the DOM.
     """
-    data_column_id = None
-    name = None
     
     def __init__(self, data_column_id: str, name: str):
         self.data_column_id = data_column_id
@@ -3029,7 +3027,7 @@ class AlarmStatusTable(_AlarmTable):
         :raises TimeoutException: If the checkbox which drives the selection of all rows is not present.
         :raises AssertionError: If unsuccessful in setting the state of the "select-all" checkbox.
         """
-        return self._alarm_status_table_header.set_select_all_checkbox_state(should_be_checked=should_be_selected)
+        return self._alarm_status_table_header.set_select_all_checkbox_state(should_be_selected=should_be_selected)
 
     def notes_modal_is_displayed(self) -> bool:
         """
@@ -3693,7 +3691,7 @@ class AlarmStatusTable(_AlarmTable):
 
             :raises TimeoutException: If the checkbox which drives the selection of all rows is not present.
             """
-            return self._select_all_checkbox.get_checkbox_state()
+            return self._select_all_checkbox.is_selected()
 
         def get_sort_order_number_of_column(self, column: AlarmTableColumn) -> Optional[int]:
             """
@@ -3707,21 +3705,21 @@ class AlarmStatusTable(_AlarmTable):
             """
             return super().get_sort_order_number_of_column(column_id=column.data_column_id)
 
-        def set_select_all_checkbox_state(self, should_be_checked: bool) -> None:
+        def set_select_all_checkbox_state(self, should_be_selected: bool) -> None:
             """
             Set the state of the "select-all" checkbox.
 
-            :param should_be_checked: If True, the checkbox will be set to checked. If False, the checkbox will be set
+            :param should_be_selected: If True, the checkbox will be set to checked. If False, the checkbox will be set
                 to an un-checked state.
 
             :raises TimeoutException: If the checkbox which drives the selection of all rows is not present.
             :raises AssertionError: If unsuccessful in setting the state of the "select-all" checkbox.
             """
             self._select_all_checkbox.scroll_to_element(align_to_top=True)
-            self._select_all_checkbox.set_state(should_be_checked=should_be_checked, binding_wait_time=0.5)
+            self._select_all_checkbox.set_state(should_be_selected=should_be_selected, binding_wait_time=0.5)
             IAAssert.is_equal_to(
                 actual_value=self.get_select_all_checkbox_state(),
-                expected_value=should_be_checked,
+                expected_value=should_be_selected,
                 failure_msg="Failed to set the state of the 'select-all' checkbox of the Alarm Status Table.")
 
         def select_all_checkbox_is_enabled(self) -> bool:

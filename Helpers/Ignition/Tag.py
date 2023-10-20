@@ -2,7 +2,7 @@ import copy
 import json
 import re
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from Helpers.Ignition.Alarm import AlarmHelper, AlarmDefinition
 
@@ -47,52 +47,6 @@ class SampleMode(Enum):
 
 
 class _BaseTag(object):
-    _name = None
-    _path = None
-    _provider = None
-    tag_type = None
-    access_rights = None
-    alarm_eval_enabled = None
-    alarms = None
-    clamp_mode = None
-    data_type: DataType = None
-    deadband = None
-    deadband_mode = None
-    default_eng_units = None
-    documentation = None
-    enabled = None
-    eng_high = None
-    eng_limit_mode = None
-    eng_low = None
-    eng_unit = None
-    event_scripts = None
-    execution_mode = None
-    execution_rate = None
-    format_string = None
-    historical_deadband_style = None
-    history_enabled = None
-    history_provider = None
-    history_tag_group = None
-    permission_model = None
-    persist_value = None
-    quality = None
-    raw_high = None
-    raw_low = None
-    read_only = None
-    read_permissions = None
-    sample_mode: SampleMode = None
-    scale_factor = None
-    scale_mode = None
-    scaled_high = None
-    scaled_low = None
-    tag_group = None
-    timestamp = None
-    tooltip = None
-    type_color = None
-    type_id = None
-    value = None
-    value_source: ValueSource = None
-    write_permissions = None
 
     def __init__(self, name: str, path: str, provider: str = '[default]'):
         self._name = name
@@ -100,6 +54,49 @@ class _BaseTag(object):
         self._provider = f'{provider}'
         self._base_path = f'{self._provider}{path}'
         self._full_path = f'{self._base_path}{name}' if self._path == '' else f'{self._base_path}/{name}'
+        self.tag_type = None
+        self.access_rights = None
+        self.alarm_eval_enabled = None
+        self.alarms = None
+        self.clamp_mode = None
+        self.data_type: Optional[DataType] = None
+        self.deadband = None
+        self.deadband_mode = None
+        self.default_eng_units = None
+        self.documentation = None
+        self.enabled = None
+        self.eng_high = None
+        self.eng_limit_mode = None
+        self.eng_low = None
+        self.eng_unit = None
+        self.event_scripts = None
+        self.execution_mode = None
+        self.execution_rate = None
+        self.format_string = None
+        self.historical_deadband_style = None
+        self.history_enabled = None
+        self.history_provider = None
+        self.history_tag_group = None
+        self.permission_model = None
+        self.persist_value = None
+        self.quality = None
+        self.raw_high = None
+        self.raw_low = None
+        self.read_only = None
+        self.read_permissions = None
+        self.sample_mode: Optional[SampleMode] = None
+        self.scale_factor = None
+        self.scale_mode = None
+        self.scaled_high = None
+        self.scaled_low = None
+        self.tag_group = None
+        self.timestamp = None
+        self.tooltip = None
+        self.type_color = None
+        self.type_id = None
+        self.value = None
+        self.value_source: Optional[ValueSource] = None
+        self.write_permissions = None
 
     def get_name(self) -> str:
         return self._name

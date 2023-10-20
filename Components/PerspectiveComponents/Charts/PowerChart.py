@@ -1180,7 +1180,7 @@ class PowerChart(BasicPerspectiveComponent):
                 new_locator=(
                     By.ID, f"ia_powerChartComponent__settings__columnsTab__penControl.{pen_control_column.value}"))
             self._special_checkbox_handling(
-                checkbox_component_piece=self._pen_control_column_checkbox, should_be_checked=should_be_displayed)
+                checkbox_component_piece=self._pen_control_column_checkbox, should_be_selected=should_be_displayed)
 
         def set_range_brush_column_display_state_in_settings_panel(
                 self,
@@ -1199,37 +1199,37 @@ class PowerChart(BasicPerspectiveComponent):
             self.click_tab(tab=Tab.COLUMNS)
             self._special_checkbox_handling(
                 checkbox_component_piece=self._get_range_brush_checkbox(range_brush_column=range_brush_column),
-                should_be_checked=should_be_displayed)
+                should_be_selected=should_be_displayed)
 
-        def set_display_checkbox_state_by_pen_name(self, pen_name: str, should_be_checked: bool) -> None:
+        def set_display_checkbox_state_by_pen_name(self, pen_name: str, should_be_selected: bool) -> None:
             """
             Set the display state of a pen listed in the Pens tab of the Settings panel. Requires the Settings panel
             already be displayed, and that the pen tab be displayed.
 
             :param pen_name: The name of the pen which will have its state set.
-            :param should_be_checked: If True, the pen will be set to display - otherwise, the pen will be set to not
+            :param should_be_selected: If True, the pen will be set to display - otherwise, the pen will be set to not
                 display.
 
             :raises TimeoutException: If the Settings panel is not already displayed.
             """
             # requires special handling due to use of uncommon checkbox.
             if (self._get_pen_visibility_checkbox(
-                    pen_name=pen_name).find().get_attribute('data-state') == "checked") != should_be_checked:
+                    pen_name=pen_name).find().get_attribute('data-state') == "checked") != should_be_selected:
                 self._get_pen_visibility_checkbox(pen_name=pen_name).click()
 
-        def set_pen_display_state_in_settings_panel(self, should_be_checked: bool) -> None:
+        def set_pen_display_state_in_settings_panel(self, should_be_selected: bool) -> None:
             """
             Set the display state of a pen while the pen is being edited. This function expects that a pen is already
             being edited.
 
-            :param should_be_checked: If True, the pen will be set to display - otherwise, the pen will be set to not
+            :param should_be_selected: If True, the pen will be set to display - otherwise, the pen will be set to not
                 display.
 
             :raises TimeoutException: If the Settings panel is not already displayed, or if we are not already editing
                 a pen.
             """
             self._special_checkbox_handling(
-                checkbox_component_piece=self._visible_checkbox, should_be_checked=should_be_checked)
+                checkbox_component_piece=self._visible_checkbox, should_be_selected=should_be_selected)
 
         def set_pen_enabled_state_in_settings_panel(self, should_be_enabled: bool) -> None:
             """
@@ -1243,20 +1243,21 @@ class PowerChart(BasicPerspectiveComponent):
             """
             # This is counter-intuitive, but the checkbox is actually to "hide" the pen - so reverse the logic here.
             self._special_checkbox_handling(
-                checkbox_component_piece=self._enabled_checkbox, should_be_checked=not should_be_enabled)
+                checkbox_component_piece=self._enabled_checkbox, should_be_selected=not should_be_enabled)
 
         @classmethod
-        def _special_checkbox_handling(cls, checkbox_component_piece: ComponentPiece, should_be_checked: bool) -> None:
+        def _special_checkbox_handling(
+                cls, checkbox_component_piece: ComponentPiece, should_be_selected: bool) -> None:
             """
             Perform one-off handling of checkboxes within the Power Chart.
 
             :param checkbox_component_piece: The ComponentPiece (not Checkbox) which defines the checkbox.
-            :param should_be_checked: A True value dictates the checkbox should have an active (checked) state.
+            :param should_be_selected: A True value dictates the checkbox should have a checked state.
 
             :raises TimeoutException: If the checkbox can not be found.
             """
             svg = checkbox_component_piece.find().find_element(By.XPATH, '../*[name()="svg"]')
-            if (svg.get_attribute("data-state") == "checked") != should_be_checked:
+            if (svg.get_attribute("data-state") == "checked") != should_be_selected:
                 svg.click()
 
         def set_pen_name_field(self, updated_pen_name: str) -> None:
@@ -1416,18 +1417,18 @@ class PowerChart(BasicPerspectiveComponent):
                 self._axis_edit_icon[axis_name] = _icon
             _icon.click()
 
-        def set_grid_visible_checkbox_state(self, should_be_checked: bool) -> None:
+        def set_grid_visible_checkbox_state(self, should_be_selected: bool) -> None:
             """
             Set the display state of the grid for the axis currently being edited.
 
-            :param should_be_checked: If True, the checkbox will be set to active/checked - otherwise the checkbox will
-                be set to inactive/un-checked.
+            :param should_be_selected: If True, the checkbox will be set to checked - otherwise the checkbox will
+                be set to un-checked.
 
             :raises TimeoutException: If the Settings panel is not already displayed, or an axis is not already being
                 edited.
             """
             self._special_checkbox_handling(
-                checkbox_component_piece=self._grid_visible_checkbox, should_be_checked=should_be_checked)
+                checkbox_component_piece=self._grid_visible_checkbox, should_be_selected=should_be_selected)
 
         def set_grid_y_axis_color(self, hex_desired_color: str) -> None:
             """
@@ -2669,19 +2670,19 @@ class PowerChart(BasicPerspectiveComponent):
         :raises TimeoutException: If the Settings panel is not already displayed.
         """
         self._settings_panel.set_display_checkbox_state_by_pen_name(
-            pen_name=pen_name, should_be_checked=should_be_displayed)
+            pen_name=pen_name, should_be_selected=should_be_displayed)
 
-    def set_grid_visible_checkbox_state_in_axis_settings(self, should_be_checked: bool) -> None:
+    def set_grid_visible_checkbox_state_in_axis_settings(self, should_be_selected: bool) -> None:
         """
         Set the display state of the grid for the axis currently being edited.
 
-        :param should_be_checked: If True, the checkbox will be set to active/checked - otherwise the checkbox will
-            be set to inactive/un-checked.
+        :param should_be_selected: If True, the checkbox will be set to checked - otherwise the checkbox will
+            be set to un-checked.
 
         :raises TimeoutException: If the Settings panel is not already displayed, or an axis is not already being
             edited.
         """
-        self._settings_panel.set_grid_visible_checkbox_state(should_be_checked=should_be_checked)
+        self._settings_panel.set_grid_visible_checkbox_state(should_be_selected=should_be_selected)
 
     def set_grid_y_axis_color_in_axis_settings(self, hex_desired_color: str) -> None:
         """
@@ -2793,7 +2794,7 @@ class PowerChart(BasicPerspectiveComponent):
         :raises TimeoutException: If the Settings panel is not already displayed, or if we are not already editing
             a pen.
         """
-        self._settings_panel.set_pen_display_state_in_settings_panel(should_be_checked=should_be_displayed)
+        self._settings_panel.set_pen_display_state_in_settings_panel(should_be_selected=should_be_displayed)
 
     def set_pen_visibility_on_pen_table(self, pen_name: str, should_be_visible: bool) -> None:
         """
