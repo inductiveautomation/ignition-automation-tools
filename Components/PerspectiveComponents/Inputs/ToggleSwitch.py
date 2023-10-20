@@ -15,7 +15,7 @@ class ToggleSwitch(BasicPerspectiveComponent):
     """
     A Perspective Toggle Switch Component.
 
-    The preferred term for referencing the state of the Toggle Switch is "active", instead of "on", "selected", or
+    The preferred term for referencing the state of the Toggle Switch is "selected", instead of "on", "active", or
     "True".
     """
     _TS_THUMB_LOCATOR = (By.CSS_SELECTOR, 'div.ia_toggleSwitch__thumb')
@@ -51,21 +51,6 @@ class ToggleSwitch(BasicPerspectiveComponent):
             description="The horizontal oval in which the 'thumb' of the Toggle Switch slides back-and-forth.",
             poll_freq=poll_freq)
 
-    def set_switch(self, should_be_active: bool = True, binding_wait_time: float = 0.5) -> None:
-        """
-        Set the state of the Toggle Switch. Takes no action if the Toggle Switch already has the specified state.
-
-        :param should_be_active: The desired state of the Toggle Switch.
-        :param binding_wait_time: The amount of time to wait after any click action is taken before continuing.
-
-        :raises AssertionError: If unsuccessful in applying the desired state to the Toggle Switch.
-        """
-        if not self.has_state(expected_state=should_be_active):
-            self.click(binding_wait_time=binding_wait_time)
-        IAAssert.is_true(
-            value=self.has_state(expected_state=should_be_active),
-            failure_msg=f"Failed to set the state of a Toggle Switch to {should_be_active}.")
-
     def get_track_color(self) -> str:
         """
         Obtain the color of the track as a string. Note that different browsers may return this color in different
@@ -75,15 +60,47 @@ class ToggleSwitch(BasicPerspectiveComponent):
         """
         return self.ts_track.get_css_property(property_name=CSS.BACKGROUND_COLOR)
 
-    def has_state(self, expected_state: bool, wait_timeout: float = 1) -> bool:
+    def is_enabled(self) -> bool:
+        """Determine if the Toggle Switch is currently enabled."""
+        return self._TS_DISABLED_CLASS not in self.ts_thumb.find().get_attribute('class')
+
+    def is_selected(self) -> bool:
         """
-        Determine whether the Toggle Switch has the supplied state. Preferable to is_active because has_state works
+        Determine if the Toggle Switch is currently selected (on/True/active).
+
+        :return: True, if the Toggle Switch is currently selected (on/True/active) - False otherwise.
+        """
+        return self._TS_SELECTED_CLASS in self.ts_thumb.find(wait_timeout=0).get_attribute('class')
+
+    def set_switch(self, should_be_selected: bool = True, binding_wait_time: float = 0.5) -> None:
+        """
+        Set the state of the Toggle Switch. Takes no action if the Toggle Switch already has the specified state.
+
+        :param should_be_selected: The desired state of the Toggle Switch.
+        :param binding_wait_time: The amount of time to wait after any click action is taken before continuing.
+
+        :raises AssertionError: If unsuccessful in applying the desired state to the Toggle Switch.
+        """
+        if not self.wait_on_selection_state(expected_selection_state=should_be_selected):
+            self.click(binding_wait_time=binding_wait_time)
+        IAAssert.is_true(
+            value=self.wait_on_selection_state(expected_selection_state=should_be_selected),
+            failure_msg=f"Failed to set the state of a Toggle Switch to {should_be_selected}.")
+
+    def wait_on_selection_state(self, expected_selection_state: bool, wait_timeout: float = 1) -> bool:
+        """
+        Determine whether the Toggle Switch has the supplied state. Preferable to is_selected because has_state works
         for both active/inactive states.
 
-        :returns: True, if the Toggle Switch has the specified state - False otherwise.
+        :param expected_selection_state: The state you want to wait for the Toggle Switch to take, where True is
+            selected, and False is unselected.
+        :param wait_timeout: The amount of time (in seconds) you are willing to wait for the Toggle Switch to take the
+            specified state.
+
+        :returns: True, if the Toggle Switch has the specified selection state - False otherwise.
         """
         try:
-            if not expected_state:  # False
+            if not expected_selection_state:  # False
                 # We are forced to wait a moment here, because Toggle Switches enter the DOM as inactive; attempts to
                 # verify if they are False too early will almost always return True because the front-end has not caught
                 # up to the backend. This is most prevalent when dealing with a Toggle Switch immediately after it has
@@ -91,36 +108,11 @@ class ToggleSwitch(BasicPerspectiveComponent):
                 self.wait_on_binding(0.25)
             return WebDriverWait(driver=self.driver, timeout=wait_timeout).until(
                 IAec.function_returns_true(
-                    custom_function=self._has_state,
-                    function_args={'expected_state': expected_state}))
+                    custom_function=self._has_selection_state,
+                    function_args={'expected_selection_state': expected_selection_state}))
         except TimeoutException:
             return False
 
-    def is_active(self, wait_timeout: float = 1) -> bool:
-        """
-        Determine whether the Toggle Switch is currently active (on, True, selected) while waiting up to the specified
-        amount of time for the Toggle Switch to become active before reporting. Does not work for waiting until a Toggle
-        Switch is inactive. Preferable to use :func:`has_state`.
-
-        :returns: True, if the Toggle Switch becomes active before the specified wait period elapses - False otherwise.
-        """
-        try:
-            return WebDriverWait(
-                driver=self.driver, timeout=wait_timeout, poll_frequency=self.poll_freq).until(
-                IAec.function_returns_true(
-                    custom_function=self._is_active,
-                    function_args={}))
-        except TimeoutException:
-            return False
-
-    def is_enabled(self) -> bool:
-        """Determine if the Toggle Switch is currently enabled."""
-        return self._TS_DISABLED_CLASS not in self.ts_thumb.find().get_attribute('class')
-
-    def _is_active(self) -> bool:
-        """Determine if the Toggle Switch is currently active (on/selected/True/active)."""
-        return self._TS_SELECTED_CLASS in self.ts_thumb.find(wait_timeout=0).get_attribute('class')
-
-    def _has_state(self, expected_state: bool) -> bool:
+    def _has_selection_state(self, expected_selection_state: bool) -> bool:
         """Determine whether the Toggle Switch has the supplied state."""
-        return self._is_active() == expected_state
+        return self.is_selected() == expected_selection_state

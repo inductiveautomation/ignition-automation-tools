@@ -1,15 +1,23 @@
 import json
+from enum import Enum
 from json import JSONDecodeError
 from typing import List, Optional, Tuple
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support.wait import WebDriverWait
 
 from Components.BasicComponent import ComponentPiece
 from Components.PerspectiveComponents.Common.ComponentModal import ComponentModal
+from Helpers.IAAssert import IAAssert
 from Helpers.IAExpectedConditions import IAExpectedConditions as IAec
 from Helpers.Point import Point
+
+
+class ExpansionState(Enum):
+    EXPANDED = 1
+    COLLAPSED = 0
 
 
 class CommonDropdown(ComponentPiece):
@@ -60,14 +68,16 @@ class CommonDropdown(ComponentPiece):
             poll_freq=poll_freq)
         self._option_elements = {}
 
-    def collapse_if_expanded(self) -> None:
+    def collapse(self) -> None:
         """
         Collapse the dropdown if it is already expanded. No action is taken if the dropdown is currently collapsed.
         """
         if self.is_expanded():
             self.wait_on_binding(0.5)
-            # counter-intuitive, but the expand and collapse icons share the same locator
-            self.toggle_expansion()
+            self._click_expansion_icon()
+        IAAssert.is_true(
+            value=self.wait_for_expansion_state(state_to_wait_on=ExpansionState.COLLAPSED),
+            failure_msg="Unable to collapse the dropdown.")
 
     def get_width_and_height_of_first_available_option(self) -> Tuple[str, str]:
         """
@@ -81,12 +91,15 @@ class CommonDropdown(ComponentPiece):
         return self._available_options.get_computed_width(include_units=False), \
             self._available_options.get_computed_height(include_units=False)
 
-    def expand_if_collapsed(self) -> None:
+    def expand(self) -> None:
         """
         Expand the dropdown if it is collapsed. No action is taken if the dropdown is currently expanded.
         """
         if not self.is_expanded():
-            self.toggle_expansion()
+            self._click_expansion_icon()
+        IAAssert.is_true(
+            value=self.wait_for_expansion_state(state_to_wait_on=ExpansionState.EXPANDED),
+            failure_msg="Unable to expand the dropdown.")
 
     def get_available_options(self) -> List[str]:
         """
@@ -96,13 +109,13 @@ class CommonDropdown(ComponentPiece):
         :returns: A list where each item is an option displayed within the Dropdown when expanded.
         """
         needs_to_collapse = not self.is_expanded()
-        self.expand_if_collapsed()
+        self.expand()
         try:
             options = [option.text for option in self._available_options.find_all(wait_timeout=0.5)]
         except TimeoutException:
             options = []
         if needs_to_collapse:
-            self.collapse_if_expanded()
+            self.collapse()
         return options
 
     def get_height_of_option_modal(self, include_units: bool = False) -> str:
@@ -158,27 +171,14 @@ class CommonDropdown(ComponentPiece):
         """
         return self._options_modal.get_termination()
 
-    def is_collapsed(self) -> bool:
-        """
-        Determine if the Dropdown is currently collapsed.
-
-        :returns: True, if the Dropdown is currently collapsed.
-        """
-        try:
-            return self.wait.until(IAec.function_returns_false(custom_function=self._is_expanded, function_args={}))
-        except TimeoutException:
-            return False
-
     def is_expanded(self) -> bool:
         """
         Determine if the Dropdown is currently expanded.
 
         :returns: True, if the Dropdown is currently expanded.
         """
-        try:
-            return self.wait.until(IAec.function_returns_true(custom_function=self._is_expanded, function_args={}))
-        except TimeoutException:
-            return False
+        return (self.ACTIVE_CLASS in self.find().get_attribute("class")) \
+            and (self._options_container.find(wait_timeout=0) is not None)
 
     def option_is_disabled(self, option_text: str) -> bool:
         """
@@ -190,10 +190,10 @@ class CommonDropdown(ComponentPiece):
 
         :raises TimeoutException: If the supplied option is not present.
         """
-        self.expand_if_collapsed()
+        self.expand()
         option_disabled = self._DISABLED_CLASS in self._get_option(
             option_text=option_text).find().get_attribute("class")
-        self.collapse_if_expanded()
+        self.collapse()
         return option_disabled
 
     def option_is_visible_within_option_modal(self, option_text: str) -> bool:
@@ -238,30 +238,45 @@ class CommonDropdown(ComponentPiece):
         """
         if option_text not in self.get_selected_options_as_list():
             self.scroll_to_element()
-            self.expand_if_collapsed()
+            self.expand()
             try:
                 self._get_option(option_text=option_text).click(wait_timeout=1, binding_wait_time=binding_wait_time)
             except TimeoutException as toe:
                 raise TimeoutException(msg=f"Failed to locate element with text of \"{option_text}\".") from toe
         assert option_text in self.get_selected_options_as_list(), f"Failed to select option: '{option_text}'."
 
-    def toggle_expansion(self) -> None:
+    def wait_for_expansion_state(self, state_to_wait_on: ExpansionState, wait_timeout: float = 1) -> bool:
         """
-        Expands the Dropdown if it is collapsed, or collapses the dropdown if it is expanded.
-        """
-        self._expand_icon.click()
+        Wait for the Dropdown to take on an expected state, before eventually returning a value which reflects whether
+        the Dropdown took that state.
 
-    def _is_expanded(self) -> bool:
-        """
-        Determine if the Dropdown is currently expanded (without waiting for the Dropdown to become expanded).
+        :param state_to_wait_on: Either expanded or collapsed.
+        :param wait_timeout: The amount of time (in seconds) to potentially wait for the Dropdown to take on the
+            supplied state.
 
-        :returns: True, if the Dropdown is currently expanded - False otherwise.
+        :return: True, if the Dropdown eventually took the supplied state - False otherwise.
         """
-        clazz = self.find().get_attribute("class")
+        exp_func = IAec.function_returns_true if state_to_wait_on == ExpansionState.EXPANDED \
+            else IAec.function_returns_false
         try:
-            return (self.ACTIVE_CLASS in clazz) and (self._options_container.find(wait_timeout=0) is not None)
+            WebDriverWait(driver=self.driver, timeout=wait_timeout).until(
+                exp_func(custom_function=self.is_expanded, function_args={}))
+            return True
         except TimeoutException:
             return False
+
+    def _click_expansion_icon(self) -> None:
+        """
+        Expands the Dropdown if it is collapsed, or collapses the dropdown if it is expanded.
+
+        :raises AssertionError: If clicking the expansion icon is unsuccessful in changing the state of the Dropdown.
+        """
+        expected_final_state = ExpansionState.COLLAPSED if self.is_expanded() else ExpansionState.EXPANDED
+        self._expand_icon.click()
+        IAAssert.is_true(
+            value=self.wait_for_expansion_state(state_to_wait_on=expected_final_state, wait_timeout=1),
+            failure_msg="Failed to modify the expansion state of the Dropdown."
+        )
 
     def _get_option(self, option_text: str) -> ComponentPiece:
         """

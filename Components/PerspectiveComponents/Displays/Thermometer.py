@@ -187,9 +187,8 @@ class Thermometer(BasicPerspectiveComponent):
         """
         return self.wait.until(
             IAExpectedConditions.function_returns_true(
-            custom_function=self._get_list_of_levels,
-            function_args={}
-        ))
+                custom_function=self._get_list_of_levels,
+                function_args={}))
 
     def get_mercury_color(self, wait_timeout: float = 0) -> str:
         """

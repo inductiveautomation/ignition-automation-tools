@@ -1,6 +1,6 @@
 from typing import Optional, Tuple, List
 
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -11,12 +11,22 @@ from Helpers.IAExpectedConditions import IAExpectedConditions as IAec
 
 
 class CommonCheckbox(ComponentPiece):
-    """A Common Checkbox, as might be used within a larger component."""
+    """
+    A Common Checkbox, as might be used within a larger component.
+
+    Important terminology:
+    "selected": Used to refer to the checked state of the checkbox. While most often a True/False value, this may
+        occasionally be None when dealing with Indeterminate Checkboxes.
+    """
     _DISABLED_CLASS = "ia_checkbox--disabled"
     _CLICK_TARGET_LOCATOR = (By.CSS_SELECTOR, "label.ia_checkbox")
     _LABEL_TEXT_LOCATOR = (By.CSS_SELECTOR, "label.checkbox-input-label")
     _ICON_LOCATOR = (By.TAG_NAME, "svg")
     _INPUT_LOCATOR = (By.TAG_NAME, "input")
+    _STATE_MAP = {
+        "indeterminate": None,
+        "checked": True
+    }
 
     def __init__(
             self,
@@ -69,14 +79,6 @@ class CommonCheckbox(ComponentPiece):
         """
         self._click_target.click(wait_timeout=wait_timeout, binding_wait_time=binding_wait_time)
 
-    def get_checkbox_state(self) -> Optional[bool]:
-        """
-        Obtain the state of the checkbox.
-
-        :returns: True, if checked. False, if un-checked. None, if indeterminate (tri-state).
-        """
-        return None if self._is_indeterminate() else self.is_checked()
-
     def get_direction_of_label_text(self) -> str:
         """
         Obtain the direction of the text as a string. This value describes the location of the text relative to the
@@ -94,19 +96,6 @@ class CommonCheckbox(ComponentPiece):
         """
         return self._icon.get_icon_name()
 
-    def is_checked(self) -> bool:
-        """
-        Determine if the checkbox is currently 'checked'. Preferred function is :func:`get_checkbox_state` as it handles
-        tri-state checkboxes as well.
-
-        :returns: True, if the checkbox is checked - False if the checkbox is un-checked or indeterminate.
-        """
-        try:
-            return self._icon.find().get_attribute("data-state") == "checked"
-        except StaleElementReferenceException:
-            # check again
-            return self.is_checked()
-
     def is_enabled(self) -> bool:
         """
         Determine if the Checkbox is currently enabled.
@@ -119,48 +108,47 @@ class CommonCheckbox(ComponentPiece):
         except TimeoutException:
             return False
 
-    def set_state(self, should_be_checked: Optional[bool], binding_wait_time: float = 0) -> None:
+    def is_selected(self) -> Optional[bool]:
+        """
+        Obtain the state of the checkbox.
+
+        :returns: True, if checked. False, if un-checked. None, if indeterminate (tri-state).
+        """
+        return self._STATE_MAP.get(self._icon.find().get_attribute("data-state"), False)
+
+    def set_state(self, should_be_selected: Optional[bool], binding_wait_time: float = 0) -> None:
         """
         Set the checkbox to a specified state.
         :param binding_wait_time: How long to wait before allowing the code to continue.
-        :param should_be_checked: True if the Checkbox should be selected, False if it should not be selected, or None
+        :param should_be_selected: True if the Checkbox should be selected, False if it should not be selected, or None
             if the checkbox is a tri-state checkbox and should be 'indeterminate'.
         """
-        self._set_state(should_be_checked=should_be_checked, binding_wait_time=binding_wait_time)
+        self._set_state(should_be_selected=should_be_selected, binding_wait_time=binding_wait_time)
 
     def _is_enabled(self) -> bool:
         """Determine if the checkbox is enabled."""
         return self._input.find().is_enabled() and (
                 self._DISABLED_CLASS not in self._click_target.find().get_attribute("class"))
 
-    def _is_indeterminate(self) -> bool:
-        """
-        Determine if the Checkbox is currently displaying as 'indeterminate' (tri-state).
-
-        :returns: True, if the Checkbox is currently displaying as indeterminate. False, if the checkbox is checked or
-            unchecked.
-        """
-        return self._icon.find().get_attribute("data-state") == "indeterminate"
-
     def _set_state(
             self,
-            should_be_checked: Optional[bool],
+            should_be_selected: Optional[bool],
             already_clicked_once: bool = False,
             binding_wait_time: float = 0) -> None:
         """
-        Set the checkbox to a specified state.
-        :param should_be_checked: True if the Checkbox should be selected, False if it should not be selected, or None
+        Set the checkbox to a specified selection state.
+        :param should_be_selected: True if the Checkbox should be selected, False if it should not be selected, or None
             if the checkbox is a tri-state checkbox and should be 'indeterminate'.
         :param already_clicked_once: Used to prevent possible recursion by preventing additional calls. In theory, we
             should only ever need to call this function twice in a row, in order to swap between the three states.
         """
-        if self.get_checkbox_state() != should_be_checked:
+        if self.is_selected() != should_be_selected:
             self.click(binding_wait_time=binding_wait_time)
             # could potentially need to click again (checked/unchecked/indeterminate)
             if not already_clicked_once:
                 # prevent possible recursion issues
-                self._set_state(should_be_checked=should_be_checked, already_clicked_once=True)
+                self._set_state(should_be_selected=should_be_selected, already_clicked_once=True)
         IAAssert.is_equal_to(
-            actual_value=self.get_checkbox_state(),
-            expected_value=should_be_checked,
+            actual_value=self.is_selected(),
+            expected_value=should_be_selected,
             failure_msg="Failed to set the state of a checkbox.")

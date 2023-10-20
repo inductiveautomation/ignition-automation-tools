@@ -1,6 +1,7 @@
 import logging
 from typing import Tuple, Union
 
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -43,4 +44,7 @@ class PagePiece(object):
             checking for the presence of the Page Piece.
         """
         assert self.primary_locator is not None, "Unable to check presence of view without a primary locator."
-        return self.driver.find_element(*self.primary_locator) is not None
+        try:
+            return self.driver.find_element(*self.primary_locator) is not None
+        except NoSuchElementException:
+            return False

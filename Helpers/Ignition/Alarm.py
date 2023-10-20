@@ -2,7 +2,7 @@ import copy
 import json
 import re
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 class AlarmState(Enum):
@@ -55,41 +55,40 @@ class AlarmMode(Enum):
 
 
 class AlarmDefinition(object):
-    _name = None
-    ack_mode = None
-    ack_notes_reqd = None
-    ack_pipeline = None
-    active_pipeline = None
-    clear_pipeline = None
-    deadband = None
-    deadband_eval_mode = None
-    display_path = None
-    enabled = None
-    label = None
-    notes = None
-    notify_initial_event = None
-    pipeline_project = None
-    priority: AlarmPriority = None
-    shelving_allowed = None
-    time_off_delay_seconds = None
-    time_on_delay_seconds = None
-    timestamp_source = None
-
-    # Alarm Mode Settings
-    active_condition = None
-    any_change = None
-    bit_on_zero = None
-    bit_position = None
-    display_name = None
-    inclusive_a = None
-    inclusive_b = None
-    mode: AlarmMode = None
-    on_each_evaluation = None
-    setpoint_a = None
-    setpoint_b = None
 
     def __init__(self, name: str):
         self._name = name
+        self.ack_mode = None
+        self.ack_notes_reqd = None
+        self.ack_pipeline = None
+        self.active_pipeline = None
+        self.clear_pipeline = None
+        self.deadband = None
+        self.deadband_eval_mode = None
+        self.display_path = None
+        self.enabled = None
+        self.label = None
+        self.notes = None
+        self.notify_initial_event = None
+        self.pipeline_project = None
+        self.priority: Optional[AlarmPriority] = None
+        self.shelving_allowed = None
+        self.time_off_delay_seconds = None
+        self.time_on_delay_seconds = None
+        self.timestamp_source = None
+
+        # Alarm Mode Settings
+        self.active_condition = None
+        self.any_change = None
+        self.bit_on_zero = None
+        self.bit_position = None
+        self.display_name = None
+        self.inclusive_a = None
+        self.inclusive_b = None
+        self.mode: Optional[AlarmMode] = None
+        self.on_each_evaluation = None
+        self.setpoint_a = None
+        self.setpoint_b = None
 
     def get_name(self) -> str:
         return self._name
@@ -106,10 +105,11 @@ class AlarmDefinition(object):
             del attrs[item]
         for attr in attrs:
             ignition_key = self._to_camel_case(attr)
-            if isinstance(getattr(local_alarm, attr), Enum):
-                alarm_dict[ignition_key] = getattr(local_alarm, attr).value
-            else:
-                alarm_dict[ignition_key] = getattr(local_alarm, attr)
+            if getattr(local_alarm, attr) is not None:
+                if isinstance(getattr(local_alarm, attr), Enum):
+                    alarm_dict[ignition_key] = getattr(local_alarm, attr).value
+                else:
+                    alarm_dict[ignition_key] = getattr(local_alarm, attr)
         return alarm_dict
 
     def duplicate(self):
