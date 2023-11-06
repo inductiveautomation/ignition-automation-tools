@@ -3,7 +3,7 @@ The content located in this repo is intended to assist with automated testing of
 various libraries used to interact with all levels of Sessions - from Components to Pages and any pieces of those pages.
 This content is NOT supported as part of any Inductive Automation support plan, and so the Inductive Automation Support 
 team will not be able to assist you with any questions. If you do have questions, the Inductive Automation 
-[forums](https://forum.inductiveautomation.com/) are your best option.
+[forums](https://forum.inductiveautomation.com/c/automated-testing/) are your best option.
 
 ## Components:
 This repository contains a near 1:1 collection of Perspective components, excluding only those components for which no 
@@ -22,7 +22,6 @@ Omitted components:
 6. Moving Analog Indicator
 7. PDF Viewer
 8. Sparkline
-9. Menu Tree
 
 ## Helpers:
 The Helpers contained in this repository allow for specialized interaction in the following areas of your testing:
@@ -59,8 +58,8 @@ When implementing your own navigation, instead of thinking about this process as
 navigation as "How does PageA navigate me to PageX?" The answer is that you should use whatever mechanisms a human user
 of the Session would use. If the user would click a link, then you should use that same link. If they would use a Horizontal
 menu, then your Page (PageA) should use that same mechanism to perform the navigation. Instead of something like
-`self.page_x.navigate_to()`, you'll have something like `self.page_a.navigate_to("PageX")` - where PageA understands 
-what needs to be done to navigate to PageX.
+`self.page_x.navigate_to()`, you'll have something like `self.page_a.navigate_to(self.page_x)` - where PageA understands 
+what needs to be done to navigate to the supplied page.
 
 Your first steps when beginning to use this content should be to provide your own file and class which will be your
 internal wrapper for PerspectivePageObject. Your class should inherit from PerspectivePageObject and provide an avenue
@@ -68,6 +67,6 @@ for supplying the superclass PerspectivePageObject with a path built from the pr
 for the page: `/<project_name>/some/path/to/page`
 
 ## General rules this content attempts to follow:
-1. Getters - Functions which would be used to obtain information about a page or component should begin with `get_`, and they should wait only long enough to locate the target before immediately returning the state or value. There are two exceptions to this: `wait_` functions, which will actually wait for some condition to be met before returning; and `is_` functions, which return information about some boolean state. While it is true that the `is_` functions could be written as something like `get_state`, that approach fall apart when used to check against something like the expansion state of a Dropdown; `is_expanded()` is superior to `get_expanded_state()`.
+1. Getters - Functions which would be used to obtain information about a page or component should begin with `get_`, and they should wait only long enough to locate the target before immediately returning the state or value. There are two exceptions to this: `wait_` functions, which will actually wait for some condition to be met before returning; and `is_` functions, which return information about some boolean state. While it is true that the `is_` functions could be written as something like `get_state`, that approach falls apart when used to check against something like the expansion state of a Dropdown; `is_expanded()` is superior to `get_expansion_state()`.
 2. Setters - Functions which interact with a session or component in some way (`set_`) do not return any value. Still, there is an expectation that setting some value should always take, and so nearly all setter functions will raise an `AssertionError` if they fail to apply some value or state. The only instances which do not raise an `AssertionError` are those instances for which it would be impossible to determine the expected state or value (like some Date component functions). For instances where you expect a setter to encounter some value other than what you have supplied (due to translations, permissions, or formatting) you should wrap the setter in a try/except block and capture the `AssertionError`, then ignore it.
 3. Waits - Functions which should wait for some condition to be met before returning (`wait_on_xxxxx`) will wait up to some period of time for that condition to be met before returning the current value. In the event the condition is not met before the waiting period has elapsed, the function will still return the current value or state so that you can compare the expected to the actual.
