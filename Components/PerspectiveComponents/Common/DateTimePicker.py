@@ -570,7 +570,7 @@ class CommonDateTimePicker(ComponentPiece):
             try:
                 if date.hours12 is not None and self._hours_input.find().is_enabled():
                     self._set_hours(date.hours12)
-                self._am_pm_picker.find().click()
+                self._am_pm_picker.click()
                 Select(webelement=self._am_pm_picker.find()).select_by_visible_text(text=date.am_pm.upper())
                 # TODO: There is an issue with Selenium/FF where the date time picker is collapsed
                 #  after selecting am/pm. With that being the case, the following assertions will fail.

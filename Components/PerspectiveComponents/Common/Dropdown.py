@@ -3,7 +3,7 @@ from enum import Enum
 from json import JSONDecodeError
 from typing import List, Optional, Tuple
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.wait import WebDriverWait
@@ -243,6 +243,12 @@ class CommonDropdown(ComponentPiece):
                 self._get_option(option_text=option_text).click(wait_timeout=1, binding_wait_time=binding_wait_time)
             except TimeoutException as toe:
                 raise TimeoutException(msg=f"Failed to locate element with text of \"{option_text}\".") from toe
+            except ElementNotInteractableException as enie:
+                origin = self._options_container.get_origin()
+                termination = self._options_container.get_termination()
+                raise ElementNotInteractableException(
+                    msg=f"The container and options were found, but could not be clicked.\n"
+                        f"Container dimensions: {termination.X - origin.X} x {termination.Y - origin.Y}") from enie
         assert option_text in self.get_selected_options_as_list(), f"Failed to select option: '{option_text}'."
 
     def wait_for_expansion_state(self, state_to_wait_on: ExpansionState, wait_timeout: float = 1) -> bool:
