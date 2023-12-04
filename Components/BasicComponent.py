@@ -2,7 +2,8 @@ from enum import Enum
 from time import sleep
 from typing import Optional, Union, List, Tuple, Any
 
-from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException, \
+    ElementNotInteractableException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -76,7 +77,13 @@ class ComponentPiece:
 
         :raises TimeoutException: If the component is not found in the DOM.
         """
-        self.find(wait_timeout=wait_timeout).click()
+        wait = WebDriverWait(driver=self.driver, timeout=wait_timeout) if wait_timeout is not None else self.wait
+        self.find(wait_timeout=wait_timeout)  # do not capture TimeoutException here
+
+        # A TimeoutException here means the element never became clickable.
+        wait.until(
+            IAec.function_returns_true(custom_function=self._click, function_args={}),
+            message="The element never became clickable.")
         self.wait_on_binding(time_to_wait=binding_wait_time)
 
     def click_with_offset(self, x_offset: int, y_offset: int) -> None:
@@ -419,6 +426,21 @@ class ComponentPiece:
         :param time_to_wait: The amount of time (in seconds) to wait.
         """
         sleep(time_to_wait)
+
+    def _click(self) -> bool:
+        """
+        Attempt to click an item, and continue attempting to do so until the item becomes "interactable".
+
+        Some Perspective UI pieces (like Dropdown option items) appear in the DOM before they can be clicked, and so
+        an attempt to interact with them before they are ready can result in a script failure.
+
+        :return: True, if the click is successful - False if the element is not ready to be clicked.
+        """
+        try:
+            self.find(wait_timeout=0).click()
+            return True
+        except ElementNotInteractableException:
+            return False
 
     def _has_text(self, text: str) -> bool:
         """
