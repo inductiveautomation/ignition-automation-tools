@@ -21,7 +21,8 @@ class PerspectivePageObject(IgnitionPageObject):
     _KNOWN_ERROR_CLASSES = [
         'component-error-boundary',
         'error-pie',
-        'ia-xy-error'
+        'ia-xy-error',
+        'gm-err-content'
     ]
 
     class ComponentContextMenu(BasicComponent):
