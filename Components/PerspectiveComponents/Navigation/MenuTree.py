@@ -10,6 +10,7 @@ from Components.PerspectiveComponents.Common.Icon import CommonIcon
 from Helpers.CSSEnumerations import CSSPropertyValue
 from Helpers.IAAssert import IAAssert
 from Helpers.IAExpectedConditions import IAExpectedConditions as IAec
+from Helpers.Point import Point
 
 
 class MenuTree(BasicPerspectiveComponent):
@@ -168,6 +169,50 @@ class MenuTree(BasicPerspectiveComponent):
         """
         return self._get_item_nav_icon(item_text=item_text, is_in_submenu=is_in_submenu).get_icon_name()
 
+    def get_origin_of_icon(self, item_text: str, is_in_submenu: bool = False) -> Point:
+        """
+        Obtain the origin of an item icon.
+
+        :param item_text: The text of the associated item.
+        :param is_in_submenu: Clarifies whether to search for the item in a submenu.
+
+        :return: A two-dimensional Point which defines the position of the upper-left corner of the icon.
+        """
+        return self._get_item_icon(item_text=item_text, is_in_submenu=is_in_submenu).get_origin()
+
+    def get_origin_of_nav_icon(self, item_text: str, is_in_submenu: bool = False) -> Point:
+        """
+        Obtain the origin of an item's nav icon.
+
+        :param item_text: The text of the associated item.
+        :param is_in_submenu: Clarifies whether to search for the item in a submenu.
+
+        :return: A two-dimensional Point which defines the position of the upper-left corner of the nav icon.
+        """
+        return self._get_item_nav_icon(item_text=item_text, is_in_submenu=is_in_submenu).get_origin()
+
+    def get_termination_of_icon(self, item_text: str, is_in_submenu: bool = False) -> Point:
+        """
+        Obtain the termination of an item icon.
+
+        :param item_text: The text of the associated item.
+        :param is_in_submenu: Clarifies whether to search for the item in a submenu.
+
+        :return: A two-dimensional Point which defines the position of the bottom-right corner of the icon.
+        """
+        return self._get_item_icon(item_text=item_text, is_in_submenu=is_in_submenu).get_origin()
+
+    def get_termination_of_nav_icon(self, item_text: str, is_in_submenu: bool = False) -> Point:
+        """
+        Obtain the termination of an item's nav icon.
+
+        :param item_text: The text of the associated item.
+        :param is_in_submenu: Clarifies whether to search for the item in a submenu.
+
+        :return: A two-dimensional Point which defines the position of the bottom-right corner of the nav icon.
+        """
+        return self._get_item_nav_icon(item_text=item_text, is_in_submenu=is_in_submenu).get_origin()
+
     def get_text_of_all_submenu_items(self) -> List[str]:
         """
         Obtain the text of all submenu items available within all expanded submenus of the Menu Tree.
@@ -205,6 +250,21 @@ class MenuTree(BasicPerspectiveComponent):
         except TimeoutException:
             return False
 
+    def icon_is_displayed_for_item(self, item_text: str, is_in_submenu: bool) -> bool:
+        """
+        Determine if an icon is displayed alongside an item of the Menu Tree.
+
+        :param item_text: The item you wish to query against.
+        :param is_in_submenu: Clarifies if the specified item is expecetd to be within a submenu.
+
+        :return: True, if an icon is displayed for the specified item - False otherwise.
+        """
+        try:
+            return self._get_item_icon(
+                item_text=item_text, is_in_submenu=is_in_submenu).find(wait_timeout=0).is_displayed()
+        except TimeoutException:
+            return False
+
     def item_is_displayed(self, item_text: str, is_in_submenu: bool = False) -> bool:
         """
         Determine if an item is displayed.
@@ -217,7 +277,7 @@ class MenuTree(BasicPerspectiveComponent):
         """
         try:
             item = self._get_submenu_item(item_text=item_text) if is_in_submenu else self._get_item(item_text=item_text)
-            return item.find().is_displayed()
+            return item.find(wait_timeout=0).is_displayed()
         except TimeoutException:
             return False
 
@@ -247,9 +307,14 @@ class MenuTree(BasicPerspectiveComponent):
         :return: True, if the specified item has a nav icon associated with it.
         """
         try:
-            return self._get_item_nav_icon(item_text=item_text, is_in_submenu=is_in_submenu).find().is_displayed()
+            return self._get_item_nav_icon(
+                item_text=item_text, is_in_submenu=is_in_submenu).find(wait_timeout=0).is_displayed()
         except TimeoutException:
             return False
+
+    def scroll_to_item(self, item_text: str, align_to_top: bool, is_in_submenu: bool = False) -> None:
+        self._get_item_or_submenu_item(
+            item_text=item_text, is_in_submenu=is_in_submenu).scroll_to_element(align_to_top=align_to_top)
 
     def submenu_is_expanded(self) -> bool:
         """
@@ -319,14 +384,14 @@ class MenuTree(BasicPerspectiveComponent):
         return icon
 
     def _get_item_nav_icon(self, item_text: str, is_in_submenu: bool) -> CommonIcon:
-        icon = self._item_icons.get(item_text)
+        icon = self._item_nav_icons.get(item_text)
         if not icon:
             icon = CommonIcon(
                 locator=(By.CSS_SELECTOR, "div.nav-icon svg"),
                 driver=self.driver,
                 parent_locator_list=self._get_item_or_submenu_item(
                     item_text=item_text, is_in_submenu=is_in_submenu).locator_list)
-            self._item_icons[item_text] = icon
+            self._item_nav_icons[item_text] = icon
         return icon
     
     def _get_item_or_submenu_item(self, item_text: str, is_in_submenu: bool) -> ComponentPiece:
