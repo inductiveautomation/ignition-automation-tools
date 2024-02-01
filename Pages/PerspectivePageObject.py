@@ -368,6 +368,20 @@ class PerspectivePageObject(IgnitionPageObject):
             errors_caught_in_boundary_list += self.driver.find_elements(By.CSS_SELECTOR, f'div.{error_class}')
         return len(error_over_lay_list + errors_caught_in_boundary_list)
 
+    def get_height_of_component_context_menu(self, include_units: bool = False) -> str:
+        """
+        Get the computed height of the component context menu. Must return as a string because of the possibility of
+        included units.
+
+        :param include_units: Include the units of height (typically "px") if True, otherwise return only the numeric
+            value (as a str).
+
+        :returns: The computed height of the component context menu as a string.
+
+        :raises TimeoutException: If the component is not found in the DOM.
+        """
+        return self._component_context_menu.get_computed_height(include_units=include_units)
+
     def get_origin_of_component_context_menu(self) -> Point:
         """
         Get the Cartesian Coordinate of the upper-left corner of the Context Menu, measured from the
@@ -453,6 +467,20 @@ class PerspectivePageObject(IgnitionPageObject):
             top-left of the viewport.
         """
         return self._component_context_menu.get_termination()
+
+    def get_width_of_component_context_menu(self, include_units: bool = False) -> str:
+        """
+        Get the computed width of the component context menu. Must return as a string because of the possibility of
+        included units.
+
+        :param include_units: Include the units of width (typically "px") if True, otherwise return only the numeric
+            value (as a str).
+
+        :returns: The computed width of the component context menu as a string.
+
+        :raises TimeoutException: If the component is not found in the DOM.
+        """
+        return self._component_context_menu.get_computed_width(include_units=include_units)
 
     def hover_over_item_of_component_context_menu(
             self, item_text: str, submenu_depth: Optional[int] = None, binding_wait_time: float = 0) -> None:

@@ -124,6 +124,40 @@ class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
         """
         return self._modal.get_origin()
 
+    def get_placeholder_text(self) -> str:
+        """
+        Obtain the text which would be displayed as a placeholder. This function makes no claims about the visibility
+        of this text.
+
+        :return: The text which would be displayed if the component would display a placeholder.
+        """
+        if self._needs_to_get_input_element():
+            input_elem = self.find().find_element(By.TAG_NAME, "input")
+        else:
+            input_elem = self.find()
+        return input_elem.get_attribute("placeholder")
+
+    def get_placeholder_text_from_modal(self) -> str:
+        """
+        Obtain the text which would be displayed as a placeholder in the input modal. This function makes no claims
+        about the visibility of this text.
+
+        :return: The text which would be displayed if the component would display a placeholder.
+        """
+        if not self.modal_is_displayed():
+            self.click_edit_icon()
+        return self._modal_input.find().get_attribute("placeholder")
+
+    def get_value_attribute_from_modal(self) -> Optional[str]:
+        """
+        Obtain the value of the `value` attribute in the input of the modal.
+
+        :return: The value of the `value` attribute of the input within the modal.
+        """
+        if not self.modal_is_displayed():
+            self.click_edit_icon()
+        return self._modal_input.find(wait_timeout=0).get_attribute("value")
+
     def modal_is_displayed(self) -> bool:
         """
         Determine if the entry modal is currently displayed.
@@ -134,6 +168,37 @@ class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
             return self._modal.find() is not None
         except TimeoutException:
             return False
+
+    def placeholder_is_displayed(self) -> bool:
+        """
+        Determine if the main component is displaying placeholder text.
+
+        This is entirely dependent on HTML rules, which dictate a placeholder will be displayed if
+        1. The `placeholder` attribute has a valid string value with length greater than 0
+        2. The `value` attribute is has no value (an empty string attribute value counts as a value, but the Session
+        back-end might be an empty string while the HTML attribute is None).
+
+        :return: True, if the component has a valid `placeholder` attribute value and no value for the `value`
+            attribute - False otherwise.
+        """
+        placeholder_attr_value = self.get_placeholder_text()
+        value_attr_value = self._internal_input.find(wait_timeout=0).get_attribute("value")
+        return (placeholder_attr_value is not None) and (len(placeholder_attr_value) > 0) and (not value_attr_value)
+
+    def placeholder_is_displayed_in_modal(self) -> bool:
+        """
+        Determine if the input modal is displaying placeholder text.
+
+        This is entirely dependent on HTML rules, which dictate a placeholder will be displayed if
+        1. The `placeholder` attribute has a valid string value with length greater than 0
+        2. The `value` attribute is has no value (an empty string attribute value counts as a value, but the Session
+        back-end might be an empty string while the HTML attribute is None).
+
+        :return: True, if the input modal has a valid `placeholder` attribute value and no value for the `value`
+            attribute - False otherwise.
+        """
+        attr_value = self.get_placeholder_text_from_modal()
+        return (attr_value is not None) and (len(attr_value) > 0) and (not self.get_value_attribute_from_modal())
 
     def set_text(
             self,
@@ -153,7 +218,8 @@ class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
         :raises AssertionError: If application or cancellation is specified, and the final displayed (and formatted)
             value of the Numeric Entry Field does not match the supplied text.
         """
-        self.click_edit_icon()
+        if not self.modal_is_displayed():
+            self.click_edit_icon()
         self._set_text(text=text)
         if apply_cancel_no_action is not None:
             self.click_apply() if apply_cancel_no_action else self.click_cancel()
@@ -222,6 +288,32 @@ class DirectNEF(BasicPerspectiveComponent, CommonTextInput):
             text = self._internal_input.find().get_attribute("value")
             self._internal_input.find().send_keys(Keys.ENTER)  # ENTER to avoid closing any popup
             return text
+
+    def get_placeholder_text(self) -> str:
+        """
+        Obtain the text which would be displayed as a placeholder. This function makes no claims about the visibility
+        of this text.
+
+        :return: The text which would be displayed if the component would display a placeholder.
+        """
+        return self._internal_input.find().get_attribute("placeholder")
+
+    def placeholder_is_displayed(self) -> bool:
+        """
+        Determine if the Numeric Entry Field is displaying placeholder text.
+
+        This is entirely dependent on HTML rules, which dictate a placeholder will be displayed if
+            1. The `placeholder` attribute has a valid string value with length greater than 0
+            2. The `value` attribute is has no value (an empty string attribute value counts as a value, but the Session
+                    back-end might be an empty string while the HTML attribute is None).
+
+        :return: True, if the component has a valid `placeholder` attribute value and no value for the `value`
+            attribute - False otherwise.
+        """
+        attr_value = self.get_placeholder_text()
+        return (attr_value is not None) \
+            and (len(attr_value) > 0) \
+            and (not self._internal_input.find().get_attribute("value"))
 
     def set_text(
             self,
