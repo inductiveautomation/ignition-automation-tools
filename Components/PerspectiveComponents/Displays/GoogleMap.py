@@ -47,8 +47,11 @@ class GoogleMap(BasicPerspectiveComponent):
     _ROTATE_TILT_MAP_COUNTERCLOCKWISE_BUTTON_LOCATOR = (By.CSS_SELECTOR, 'button[title="Rotate map counterclockwise"]')
     _EXTERNAL_LINK_LOCATOR = (By.CSS_SELECTOR, 'a[title="Open this area in Google Maps (opens a new window)"]')
     _GENERAL_CLOSE_POPUP_BUTTON_LOCATOR = (By.CSS_SELECTOR, 'button[title="Close"]')
-    _MAP_TYPE_CONTROLS_LOCATOR = (By.CSS_SELECTOR, 'div[role="menuitemradio" aria-checked="true"] | '
-                                                   'button[title="Change map style"].span')
+    # Map type controls div classes will be one of the following, depending on its layout (configured by
+    # mapType.controlStyle). The wildcard allows us to locate it in either layout.
+    # In dropdown mode: gmnoprint gm-style-mtc
+    # In horizontal_bar mode: gmnoprint gm-style-mtc-bbw
+    _MAP_TYPE_CONTROLS_LOCATOR = (By.CSS_SELECTOR, 'div.gmnoprint[class*=" gm-style-mtc"]')
 
     class _MapTypeControls(ComponentPiece):
         """
@@ -456,12 +459,34 @@ class GoogleMap(BasicPerspectiveComponent):
             .context_click()\
             .perform()
 
+    def get_full_screen_button_height(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed height of the full screen button.
+
+        :returns: The computed height of the full screen button.
+        """
+        return self._full_screen_button.get_computed_height(include_units=include_units)
+
+    def get_full_screen_button_width(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed width of the full screen button.
+
+        :returns: The computed width of the full screen button.
+        """
+        return self._full_screen_button.get_computed_width(include_units=include_units)
+
     def get_map_center(self) -> GeographicPoint:
         """
         Obtains the central latitude and longitude point of the Google Map's current position.
 
         :returns: A GeographicPoint representing the latitude and longitude of the center of the map.
         """
+        try:
+            self.wait.until(ec.presence_of_element_located(self._EXTERNAL_LINK_LOCATOR))
+        except TimeoutException as toe:
+            raise TimeoutException(
+                f"Failed to get the map center position because the link that we parse it from was not present.") \
+                from toe
         center = re.search(
             '(?<=ll=)(.*)(?=&z)',
             self._external_link.find(wait_timeout=0).get_attribute('href')).group().split(',')
@@ -474,6 +499,22 @@ class GoogleMap(BasicPerspectiveComponent):
         :returns: The selected map type option.
         """
         return self._map_type_controls.get_selected_map_type()
+
+    def get_map_type_controls_height(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed width of the map type controls, in either layout setting (dropdown or horizontal bar.)
+
+        :returns: The computed height of the map type controls.
+        """
+        return self._map_type_controls.get_computed_height(include_units=include_units)
+
+    def get_map_type_controls_width(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed width of the map type controls, in either layout setting (dropdown or horizontal bar.)
+
+        :returns: The computed width of the map type controls.
+        """
+        return self._map_type_controls.get_computed_width(include_units=include_units)
 
     def get_map_zoom(self) -> float:
         """
@@ -493,6 +534,38 @@ class GoogleMap(BasicPerspectiveComponent):
             return len(self._general_close_popup_button.find_all(wait_timeout=0))
         except TimeoutException:
             return 0
+
+    def get_zoom_in_button_height(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed height of the zoom in button.
+
+        :returns: The computed height of the zoom in button.
+        """
+        return self._zoom_in_button.get_computed_height(include_units=include_units)
+
+    def get_zoom_in_button_width(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed width of the zoom in button.
+
+        :returns: The computed width of the zoom in button.
+        """
+        return self._zoom_in_button.get_computed_width(include_units=include_units)
+
+    def get_zoom_out_button_height(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed height of the zoom out button.
+
+        :returns: The computed height of the zoom out button.
+        """
+        return self._zoom_out_button.get_computed_height(include_units=include_units)
+
+    def get_zoom_out_button_width(self, include_units: bool = False) -> str:
+        """
+        Obtains the computed width of the zoom out button.
+
+        :returns: The computed width of the zoom out button.
+        """
+        return self._zoom_out_button.get_computed_width(include_units=include_units)
 
     def right_click(self, x_offset: int = 0, y_offset: int = 0) -> None:
         """

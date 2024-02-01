@@ -1,3 +1,6 @@
+from Helpers.Ignition.Alarm import AlarmDefinition
+
+
 class PerspectiveAlarm(object):
     """
     Defines the configuration of an Ignition alarm, and is not intended to be used for storing information
@@ -16,3 +19,14 @@ class PerspectiveAlarm(object):
         self.source_path = source_path
         self.tag_path = tag_path
         self.notes = notes
+
+    def get_alarm_definition(self) -> AlarmDefinition:
+        definition = AlarmDefinition(name=self.name)
+        definition.display_path = self.display_path
+        definition.priority = self.priority
+        definition.label = self.label
+        definition.notes = self.notes
+        definition.source = self.source_path
+        definition.tag_path = self.tag_path
+        definition.notes = self.notes
+        return definition

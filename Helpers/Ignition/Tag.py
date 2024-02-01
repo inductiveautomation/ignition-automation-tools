@@ -2,7 +2,7 @@ import copy
 import json
 import re
 from enum import Enum
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from Helpers.Ignition.Alarm import AlarmHelper, AlarmDefinition
 
@@ -399,6 +399,27 @@ class Folder(_ComplexTag):
 
 
 class TagHelper:
+    @staticmethod
+    def build_tag_from_dictionary(tag_configs: Dict):
+        provider = ''
+        path = ''
+        name = tag_configs.get('name')
+        if 'path' in tag_configs:
+            provider = f'[{tag_configs.get("path").get("source")}]'
+            path = TagHelper._process_path(tag_configs.get('path', '').get('pathParts', ''))
+        match tag_configs.get('tagType'):
+            case 'UdtInstance':
+                tag = UdtInstance(name=name, provider=provider, path=path, type_id='')
+            case 'UdtType':
+                tag = UdtDef(name=name, provider=provider, path=path)
+            case 'Folder':
+                tag = Folder(name=name, provider=provider, path=path)
+            case _:
+                tag = Tag(name=name, provider=provider, path=path)
+        for key in tag_configs.keys():
+            tag = TagHelper._process_key(tag, key, tag_configs[key])
+        return tag
+
     @staticmethod
     def build_tag_from_string(dict_as_string: str):
         """Build a Tag, UdtInstance, UdtDef or Folder object from a string representation of a dict"""

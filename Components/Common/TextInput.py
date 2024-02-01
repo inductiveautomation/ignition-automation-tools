@@ -63,7 +63,7 @@ class CommonTextInput(ComponentPiece):
 
         :returns: True, if a component is currently displaying placeholder text - False otherwise.
         """
-        return self.find().get_attribute("placeholder") is not None
+        return (self.find().get_attribute("placeholder") is not None) and (self.find().get_attribute("value") is None)
 
     def set_text(
             self,

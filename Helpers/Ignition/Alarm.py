@@ -76,6 +76,7 @@ class AlarmDefinition(object):
         self.time_off_delay_seconds = None
         self.time_on_delay_seconds = None
         self.timestamp_source = None
+        self.source = None
 
         # Alarm Mode Settings
         self.active_condition = None
@@ -96,6 +97,7 @@ class AlarmDefinition(object):
     def to_dict(self) -> Dict:
         local_alarm = self.duplicate()
         special_case = ['_name']
+        ignore_list = ['source']
         # Get set attributes of the Tag Object
         attrs = vars(local_alarm)
         alarm_dict = {}
@@ -105,7 +107,7 @@ class AlarmDefinition(object):
             del attrs[item]
         for attr in attrs:
             ignition_key = self._to_camel_case(attr)
-            if getattr(local_alarm, attr) is not None:
+            if getattr(local_alarm, attr) is not None and attr not in ignore_list:
                 if isinstance(getattr(local_alarm, attr), Enum):
                     alarm_dict[ignition_key] = getattr(local_alarm, attr).value
                 else:

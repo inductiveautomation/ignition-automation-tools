@@ -106,17 +106,14 @@ class TerminalStatePageObject(PagePiece):
         except NoSuchElementException:
             return False
 
-    def wait_for_terminal_state_page(self) -> None:
+    def wait_for_terminal_state_page(self) -> bool:
         """
         Wait for the Terminal State Page to load, but allow code to continue in the event the page does not load.
         """
         try:
-            self.wait.until(
-                method=ec.presence_of_element_located(
-                    self._HEADER_LOCATOR),
-                message="The header was not found on the Terminal State page - the page may not have loaded")
+            return self.wait.until(method=ec.presence_of_element_located(self._HEADER_LOCATOR)) is not None
         except TimeoutException:
-            pass
+            return False
 
     def is_current_page(self) -> bool:
         """
