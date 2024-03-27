@@ -8,6 +8,7 @@ from Components.BasicComponent import BasicPerspectiveComponent, ComponentPiece
 from Components.PerspectiveComponents.Common.ComponentModal import ComponentModal
 from Components.PerspectiveComponents.Common.Icon import CommonIcon
 from Helpers.IASelenium import IASelenium
+from Helpers.Point import Point
 
 
 class HorizontalMenu(BasicPerspectiveComponent):
@@ -164,7 +165,7 @@ class HorizontalMenu(BasicPerspectiveComponent):
 
     def click_visible_child_item(self, text_of_child_item: str) -> None:
         """
-        Click a base-level item by text.
+        Click a child-level item by text.
 
         :raises TimeoutException: If unable to locate any child item with the supplied text.
         """
@@ -192,6 +193,26 @@ class HorizontalMenu(BasicPerspectiveComponent):
         Obtain the text for all base-level items.
         """
         return [item.text for item in self._menu_items.find_all()]
+
+    def get_origin_of_child_menu_item(self, text_of_child_item: str) -> Point:
+        """
+        Obtain the origin of a child item of the Horizontal Menu.
+
+        :param text_of_child_item: The string text name of a Horizontal Menu item.
+
+        :returns: A two-dimensional Point which defines the position of the top-left corner of the child item.
+        """
+        return self._get_child_menu_item(text_of_child_item=text_of_child_item).get_origin()
+
+    def get_termination_of_child_menu_item(self, text_of_child_item: str) -> Point:
+        """
+        Obtain the termination of a child item of the Horizontal Menu.
+
+        :param text_of_child_item: The string text name of a Horizontal Menu item.
+
+        :returns: A two-dimensional Point which defines the position of the bottom-right corner of the child item.
+        """
+        return self._get_child_menu_item(text_of_child_item=text_of_child_item).get_termination()
 
     def is_compressed(self) -> bool:
         """

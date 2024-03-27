@@ -6,6 +6,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from Components.BasicComponent import ComponentPiece
 from Helpers.IAExpectedConditions import IAExpectedConditions as IAec
+from Helpers.IAExpectedConditions.IAExpectedConditions import TextCondition
 from Helpers.Point import Point
 
 
@@ -334,3 +335,34 @@ class Body(ComponentPiece):
         :raises TimeoutException: If no rows are present in the Table.
         """
         return self._rows.get_computed_width(include_units=include_units)
+
+    def wait_for_cell_to_have_text_by_row_index_column_id(
+            self,
+            zero_based_row_index: Union[int, str],
+            column_id: str,
+            text: str,
+            timeout: Optional[float] = None) -> str:
+        """
+        Get the String data of a cell specified by a zero-based row index and a CASE-SENSITIVE column name, waiting up
+        to some period of time until the cell matches the supplied text. If the cell never takes on the expected text,
+        the value of the cell when the time has elapsed is returned instead.
+
+        :param zero_based_row_index: The zero-based index of the row you are targeting.
+        :param column_id: The CASE-SENSITIVE id of the column you are targeting. Note that the id may not be the name
+            of the column as the id is a direct mapping against the keys of the data in use.
+        :param text: The expected text that the cell in the specified row and column should contain.
+        :param timeout: (Optional) The maximum time to wait for the cell to have the specified text. If not provided,
+        the default timeout value is used.
+
+        :returns: The displayed contents of the specified cell.
+
+        :raises TimeoutException: If the cell doesn't contain the expected text within the timeout period.
+        """
+        _locator = (By.CSS_SELECTOR, f'{self.ROW_GROUP_CSS}[data-row-index="{zero_based_row_index}"] '
+                                     f'{self.BODY_ROW_CSS} {self.BODY_CELL_CSS}[data-column-id="{column_id}"]')
+        return ComponentPiece(
+            locator=_locator,
+            driver=self.driver,
+            parent_locator_list=self.locator_list,
+            poll_freq=self.poll_freq).wait_on_text_condition(
+                text_to_compare=text, condition=TextCondition.EQUALS, wait_timeout=timeout)
