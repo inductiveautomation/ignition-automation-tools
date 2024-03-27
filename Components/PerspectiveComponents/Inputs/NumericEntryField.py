@@ -10,7 +10,7 @@ from Components.Common.Button import CommonButton
 from Components.Common.TextInput import CommonTextInput
 from Components.PerspectiveComponents.Common.ComponentModal import ComponentModal
 from Helpers.IAAssert import IAAssert
-from Helpers.IAExpectedConditions.IAExpectedConditions import TextCondition
+from Helpers.IAExpectedConditions.IAExpectedConditions import NumericCondition
 from Helpers.IASelenium import IASelenium
 from Helpers.Point import Point
 
@@ -132,7 +132,7 @@ class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
         :return: The text which would be displayed if the component would display a placeholder.
         """
         if self._needs_to_get_input_element():
-            input_elem = self.find().find_element(By.TAG_NAME, "input")
+            input_elem = self._internal_input.find()
         else:
             input_elem = self.find()
         return input_elem.get_attribute("placeholder")
@@ -223,15 +223,17 @@ class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
         self._set_text(text=text)
         if apply_cancel_no_action is not None:
             self.click_apply() if apply_cancel_no_action else self.click_cancel()
-            self._modal_input.wait_on_binding(time_to_wait=binding_wait_time)
             # assertion needs to go here as it does not make sense to assert if the value has not yet been committed.
             IAAssert.is_equal_to(
                 actual_value=_remove_commas(
                     value=self.wait_on_text_condition(
-                        text_to_compare=text, condition=TextCondition.EQUALS)),
+                        text_to_compare=text,
+                        condition=NumericCondition.EQUALS,
+                        wait_timeout=binding_wait_time + 0.5)),  # hard-coded extra "soft" wait time due to tags
                 expected_value=_remove_commas(value=_zero_out(expected_value=text)),
                 failure_msg="Failed to set the text of the Button-mode Numeric Entry Field.",
                 as_type=str)
+        self.wait_on_binding(time_to_wait=binding_wait_time)
 
     def _set_text(self, text: Union[float, str]) -> None:
         """
@@ -335,15 +337,19 @@ class DirectNEF(BasicPerspectiveComponent, CommonTextInput):
         if self._internal_input.find().get_attribute('readonly') is not None:
             self._internal_input.click()
         self._internal_input.find().send_keys(Keys.BACK_SPACE + str(text) + (Keys.ENTER if release_focus else ''))
-        self.wait_on_binding(time_to_wait=binding_wait_time)
         if release_focus:
+            # We need to wait at least some small period of time here because bi-directional tag writes with
+            # fields receive a Pending overlay which changes the structure of the component.
             IAAssert.is_equal_to(
                 actual_value=_remove_commas(
                     value=self.wait_on_text_condition(
-                        text_to_compare=text, condition=TextCondition.EQUALS)),
+                        text_to_compare=text,
+                        condition=NumericCondition.EQUALS,
+                        wait_timeout=binding_wait_time + 0.5)),  # hard-coded extra "soft" wait time due to tags
                 expected_value=_remove_commas(value=_zero_out(expected_value=text)),
                 failure_msg="Failed to apply the supplied text to the Direct-variant Numeric Entry Field.",
                 as_type=str)
+        self.wait_on_binding(time_to_wait=binding_wait_time)
 
 
 class ProtectedNEF(DirectNEF):
@@ -409,15 +415,17 @@ class ProtectedNEF(DirectNEF):
         """
         IASelenium(driver=self.driver).double_click(web_element=self.find())
         self._set_text(text=str(text), release_focus=release_focus)
-        self.wait_on_binding(time_to_wait=binding_wait_time)
         if release_focus:
             IAAssert.is_equal_to(
                 actual_value=_remove_commas(
                     value=self.wait_on_text_condition(
-                        text_to_compare=text, condition=TextCondition.EQUALS)),
+                        text_to_compare=text,
+                        condition=NumericCondition.EQUALS,
+                        wait_timeout=binding_wait_time + 0.5)),  # hard-coded extra "soft" wait time due to tags
                 expected_value=_remove_commas(value=_zero_out(expected_value=text)),
                 failure_msg="Failed to apply the supplied text to the Protected-variant Numeric Entry Field.",
                 as_type=str)
+        self.wait_on_binding(time_to_wait=binding_wait_time)
 
     def set_text_via_long_press(
             self,
@@ -437,16 +445,18 @@ class ProtectedNEF(DirectNEF):
         """
         IASelenium(driver=self.driver).long_click(web_element=self.find())
         self._set_text(text=str(text), release_focus=release_focus)
-        self.wait_on_binding(time_to_wait=binding_wait_time)
         if release_focus:
             IAAssert.is_equal_to(
                 actual_value=_remove_commas(
                     value=self.wait_on_text_condition(
-                        text_to_compare=text, condition=TextCondition.EQUALS)),
+                        text_to_compare=text,
+                        condition=NumericCondition.EQUALS,
+                        wait_timeout=binding_wait_time + 0.5)),  # hard-coded extra "soft" wait time due to tags
                 expected_value=_remove_commas(value=_zero_out(expected_value=text)),
                 failure_msg="Failed to apply the supplied text to the Protected-variant Numeric Entry Field while "
                             "activating the input via a long-press interaction.",
                 as_type=str)
+        self.wait_on_binding(time_to_wait=binding_wait_time)
 
     def _set_text(self, text: str, release_focus: bool = False) -> None:
         """
