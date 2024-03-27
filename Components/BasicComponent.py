@@ -317,7 +317,7 @@ class ComponentPiece:
     def wait_on_text_condition(
             self,
             text_to_compare: Optional[Any],
-            condition: Union[IAec.TextCondition, IAec.NumericCondition],
+            condition: IAec.TextCondition,
             wait_timeout: Optional[float] = None) -> str:
         """
         Obtain the text of this Component, after potentially waiting some period of time for the Component to display
@@ -363,10 +363,6 @@ class ComponentPiece:
                 return text_to_compare in text
             elif condition == IAec.TextCondition.DOES_NOT_CONTAIN:
                 return text_to_compare not in text
-            elif condition == IAec.NumericCondition.EQUALS:
-                return str(text_to_compare).replace(",", "") == str(text).replace(",", "")
-            elif condition == IAec.NumericCondition.DOES_NOT_EQUAL:
-                return str(text_to_compare).replace(",", "") != str(text).replace(",", "")
             else:
                 raise NotImplementedError("Unhandled condition while comparing text.")
 

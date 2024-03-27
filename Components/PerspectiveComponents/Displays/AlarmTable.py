@@ -621,20 +621,15 @@ class _AlarmTable(Table, BasicPerspectiveComponent):
         except TimeoutException:
             return 0
 
-    def get_count_of_displayed_rows(self, expected_count: Optional[int] = None) -> int:
+    def get_count_of_displayed_rows(self) -> int:
         """
         Obtain a count of rows visually displayed within the Alarm Table. This is not a count of total rows - this is
         a count of rows the user can see on the current page, including after scrolling.
 
-        param expected_count: The expected number of rows in the Alarm Table. If supplied, this function will attempt
-            to wait until this value is the actual count before returning a value.
-
         :returns: The count of rows displayed on the current page of the Alarm Table.
         """
         # alarm tables have no concept of subview, so explicitly exclude subviews from the count
-        return self._alarm_table_body.get_row_count(
-            include_expanded_subviews_in_count=False,
-            expected_count=expected_count)
+        return self._alarm_table_body.get_row_count(include_expanded_subviews_in_count=False)
 
     def get_count_of_results_matching_text_filter(self) -> int:
         """

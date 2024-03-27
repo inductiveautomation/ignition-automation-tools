@@ -58,16 +58,6 @@ class CSS:
 
     FILL = CSSPropertyValue("fill")
     FILL_OPACITY = CSSPropertyValue("fill-opacity")
-
-    class FlexFlow:
-        """
-        This class currently only contains values supported by the Flex Container for direction.
-        """
-        COLUMN = CSSPropertyValue("column")
-        COLUMN_REVERSE = CSSPropertyValue("column-reverse")
-        ROW = CSSPropertyValue("row")
-        ROW_REVERSE = CSSPropertyValue("row-reverse")
-
     FONT_SIZE = CSSPropertyValue("font-size")
     HEIGHT = CSSPropertyValue("height")
     JUSTIFY_CONTENT = CSSPropertyValue('justify-content')

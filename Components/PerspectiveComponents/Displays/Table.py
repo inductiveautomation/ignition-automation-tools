@@ -3,12 +3,10 @@ from typing import List, Optional, Tuple, Union
 
 from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, TimeoutException, \
     ElementClickInterceptedException
-from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from Components.BasicComponent import ComponentPiece, BasicPerspectiveComponent
-from Components.Common.TextInput import CommonTextInput
 from Components.PerspectiveComponents.Common.DateRangeSelector import HistoricalRange
 from Components.PerspectiveComponents.Common.DateTimePicker import PerspectiveDate
 from Components.PerspectiveComponents.Common.Icon import CommonIcon
@@ -379,50 +377,6 @@ class _TableBody(Body):
                 return False
         return True
 
-    def set_cell_data_by_row_index_column_id(
-            self,
-            zero_based_row_index: int,
-            column_id: str,
-            text: str,
-            commit_value: bool) -> None:
-        """
-        Set the data of a cell specified by a zero-based row index and a CASE-SENSITIVE column ID.
-
-        :param zero_based_row_index: The zero-based index of the row you are targeting.
-        :param column_id: The CASE-SENSITIVE id of the column you are targeting. Note that the id may not be the name
-            of the column as the id is a direct mapping against the keys of the data in use.
-        :param text: The new data to be set in the specified cell.
-        :param commit_value: A boolean flag indicating whether to commit changes immediately or not.
-            If True, changes will be committed by appending Keys.ENTER to it after setting the cell data.
-            If False, changes will not be committed, allowing for further modifications before committing.
-
-        :raises: TimeoutException: If the cell is not already in an editable state; this function does not prepare the
-        cell for editing.
-        """
-
-        _locator = (By.CSS_SELECTOR, f'{self.__get_row_css_by_row_index(row_index=zero_based_row_index)} '
-                                     f'{self.__get_column_css_by_column_id(column_id=column_id)} textarea.ia_textArea')
-        if commit_value:
-            text += Keys.ENTER
-        text_input = CommonTextInput(
-                locator=_locator,
-                driver=self.driver,
-                parent_locator_list=self.locator_list,
-                poll_freq=self.poll_freq)
-        """
-        Note:
-        After using commit changes, set_text will attempt to locate the <textarea> and verify if the text has been 
-        set. However, the <textarea> disappears after committing the changes, resulting in a TimeoutException.
-        A TimeoutException before attempting to set the text means the cell is not editable. The TimeoutException 
-        swallowed while actually setting the cell is the one which is expected due to the <textarea> being removed from 
-        the DOM.
-        """
-        text_input.find()
-        try:
-            text_input.set_text(text=text, release_focus=False)
-        except TimeoutException:
-            pass
-
     def scroll_to_row(self, row_index: int, align_to_top: bool = False) -> None:
         """
         Scroll the Table so that the specified row is visible.
@@ -503,10 +457,6 @@ class _TableBody(Body):
     def __get_column_css_by_index(self, column_index: Union[int, str]) -> str:
         """Obtain the CSS which defines a column based on its index."""
         return f'{self._CELL_LOCATOR[1]}[data-column-index="{column_index}"]'
-
-    def __get_column_css_by_column_id(self, column_id: Union[int, str]) -> str:
-        """Obtain the CSS which defines a column based on its id."""
-        return f'{self._CELL_LOCATOR[1]}[data-column-id="{column_id}"]'
 
     def __get_row_css_by_row_index(self, row_index: Union[int, str]) -> str:
         """Obtain the CSS which defines a row based on its index."""
@@ -1677,23 +1627,6 @@ class Table(CommonTable, BasicPerspectiveComponent):
         """
         self._filter.set_filter_text(text=text)
 
-    def set_cell_data_by_row_index_column_id(
-            self, row_index: int, column_id: str, text: str, commit_value: bool) -> None:
-        """
-        Set the data of a cell in the table specified by the given parameters.
-
-        :param row_index: The zero-based index of the row where the cell data will be set.
-        :param column_id: The CASE-SENSITIVE id of the column where the cell data will be set.
-            Note that the id may not be the name of the column as the id is a direct mapping against the keys of the
-            data in use.
-        :param text: The new data to be set in the specified cell.
-        :param commit_value: A boolean flag indicating whether to commit changes immediately or not.
-            If True, changes will be committed by pressing Enter after setting the cell data.
-            If False, changes will not be committed, allowing for further modifications before committing.
-        """
-        self._body.set_cell_data_by_row_index_column_id(
-            zero_based_row_index=row_index, column_id=column_id, text=text, commit_value=commit_value)
-
     def start_time_hours_input_is_enabled(self) -> bool:
         """
         Determine if the hours input of the start time is enabled.
@@ -1734,11 +1667,3 @@ class Table(CommonTable, BasicPerspectiveComponent):
         :param row_index: The zero-based index of the row to check.
         """
         return self._body.subview_is_expanded(row_index=row_index)
-
-    def wait_for_cell_to_have_text_by_row_index_column_id(
-            self, zero_based_row_index: Union[int, str], column_id: str, text: str, timeout: float = 0):
-        return self._body.wait_for_cell_to_have_text_by_row_index_column_id(
-            zero_based_row_index=zero_based_row_index,
-            column_id=column_id,
-            text=text,
-            timeout=timeout)

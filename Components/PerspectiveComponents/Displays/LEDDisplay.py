@@ -147,23 +147,19 @@ class LEDDisplay(BasicPerspectiveComponent):
 
         :param trim: If True, we will remove any leading spaces from the displayed value.
 
-        :returns: The displayed value of the LED Display. If no value is currently displayed for the LED Display,
-            the empty string is returned.
+        :returns: The displayed value of the LED Display.
+
+        :raises TimeoutException: If no value is currently displayed for the LED Display.
         """
         displayed_text = []
         try:
             all_digits = self._digit.find_all()
         except TimeoutException:
             all_digits = []
-        try:
-            for i in range(len(all_digits)):
-                displayed_text.insert(
-                    0,
-                    self._get_digit_by_index(zero_based_index_from_right=i)
-                        .find(wait_timeout=0)
-                        .get_attribute(name="data-char"))
-        except TimeoutException:
-            pass
+        for i in range(len(all_digits)):
+            displayed_text.insert(
+                0,
+                self._get_digit_by_index(zero_based_index_from_right=i).find().get_attribute(name="data-char"))
         displayed_text = ''.join(displayed_text)
         if trim:
             displayed_text = displayed_text.lstrip(" ")

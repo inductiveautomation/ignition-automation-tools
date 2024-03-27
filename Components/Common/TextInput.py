@@ -8,7 +8,6 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from Components.BasicComponent import ComponentPiece
 from Helpers.IAAssert import IAAssert
-from Helpers.IAExpectedConditions.IAExpectedConditions import TextCondition
 
 
 class CommonTextInput(ComponentPiece):
@@ -54,6 +53,7 @@ class CommonTextInput(ComponentPiece):
 
         :returns: The text contents of the component via the `value` attribute.
         """
+        self.wait_on_binding(time_to_wait=0.5)
         input_component = self._internal_input if self._needs_to_get_input_element() else self
         return input_component.find().get_attribute("value")
 
@@ -84,7 +84,6 @@ class CommonTextInput(ComponentPiece):
         expected_text = text.encode("ascii", "ignore").decode()
         if text is None or text == '':
             text = ' ' + Keys.BACKSPACE
-        self.wait_on_text_condition(text_to_compare="", condition=TextCondition.DOES_NOT_EQUAL, wait_timeout=0.5)
         current_text = self.get_text()  # Do NOT wait on matching text to be in place
         keys_to_send = ''.join([Keys.ARROW_RIGHT for _ in current_text] +
                                [Keys.BACKSPACE for _ in current_text] +
@@ -104,12 +103,11 @@ class CommonTextInput(ComponentPiece):
         input_object.find().send_keys(keys_to_send)
         if release_focus:
             self.release_focus()
+        self.wait_on_binding(time_to_wait=binding_wait_time)
         IAAssert.is_equal_to(
-            actual_value=self.wait_on_text_condition(
-                text_to_compare=expected_text, condition=TextCondition.EQUALS, wait_timeout=binding_wait_time + 0.5),
+            actual_value=self.get_text(),
             expected_value=expected_text,
             failure_msg="Failed to set the value of the input.")
-        self.wait_on_binding(time_to_wait=binding_wait_time)
 
     def _needs_to_get_input_element(self) -> bool:
         """

@@ -119,8 +119,8 @@ class IAAssert:
         :raises AssertionError: If the provided values are not within the specified number of decimal places of one
             another.
         """
-        absolute_tolerance = abs(1 / (pow(10, decimal_places)))
-        assert math.isclose(actual_value, expected_value, abs_tol=absolute_tolerance, rel_tol=0),  \
+        relative_tolerance = abs(1 / (pow(10, decimal_places)))
+        assert math.isclose(actual_value, expected_value, rel_tol=relative_tolerance), \
             IAAssert._generate_failure_msg(
                 msg=f'Assert {actual_value} is within {decimal_places} decimal places of {expected_value}',
                 failure_msg=failure_msg)

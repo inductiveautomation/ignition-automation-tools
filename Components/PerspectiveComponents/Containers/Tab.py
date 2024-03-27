@@ -44,7 +44,7 @@ class Tab(BasicPerspectiveComponent):
         self._active_tab = ComponentPiece(
             locator=self._ACTIVE_TAB_LOCATOR,
             driver=driver,
-            parent_locator_list=self.locator_list,
+            parent_locator_list=None,
             poll_freq=poll_freq)
 
     def click_tab_by_index(self, index: Union[int, str]) -> None:

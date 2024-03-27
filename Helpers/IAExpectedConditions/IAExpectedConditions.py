@@ -3,7 +3,7 @@ A collection of our defined Expected Conditions. For a brief explanation on how 
 Conditions on https://selenium-python.readthedocs.io/waits.html.
 Leaving class names in lowercase to conform with existing expected_conditions classes.
 """
-from enum import Enum
+from enum import Enum, auto
 from typing import Tuple, Callable
 
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, WebDriverException
@@ -13,22 +13,10 @@ from selenium.webdriver.remote.webelement import WebElement
 
 
 class TextCondition(Enum):
-    CONTAINS = 1
-    DOES_NOT_CONTAIN = 2
-    EQUALS = 3
-    DOES_NOT_EQUAL = 4
-
-
-class NumericCondition(Enum):
-    """
-    Numeric conditions are not the same as TextConditions, because Numeric Entry Fields render values of
-    "1000" as "1,000". Additionally, supplying values like 1.5e2 would display as something like "150".
-
-    When using NumericCondition, commas are always ignored. Note also that this will not account for formatting of
-    values applied by the Numeric Entry Field.
-    """
-    EQUALS = 5
-    DOES_NOT_EQUAL = 6
+    CONTAINS = auto()
+    DOES_NOT_CONTAIN = auto()
+    EQUALS = auto()
+    DOES_NOT_EQUAL = auto()
 
 
 class child_element_has_partial_css_class(object):
