@@ -242,10 +242,12 @@ class GoogleMap(BasicPerspectiveComponent):
                 self._map_control.click()
                 if self.terrain_checkbox_is_selected() != should_be_selected:
                     self.wait.until(ec.presence_of_element_located(self._TERRAIN_LIST_ITEM_LOCATOR)).click()
+                    self.wait_on_binding()
             else:
                 self._satellite_control.click()
                 if self.labels_checkbox_is_selected() != should_be_selected:
                     self.wait.until(ec.presence_of_element_located(self._LABELS_LIST_ITEM_LOCATOR)).click()
+                    self.wait_on_binding()
 
         def _check_selected_main_map_type(self) -> MapType:
             """
