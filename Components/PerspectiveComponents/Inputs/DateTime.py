@@ -222,14 +222,14 @@ class DateTimeInput(BasicPerspectiveComponent):
         Obtains the month currently in use for the DateTime Input.
         """
         self._expand_and_then_collapse_when_done()
-        return self.get_selected_month()
+        return self._picker.get_selected_month()
 
     def get_selected_year(self) -> int:
         """
         Obtain the currently selected year of the DateTime Input.
         """
         self._expand_and_then_collapse_when_done()
-        return self.get_selected_year()
+        return self._picker.get_selected_year()
 
     def get_text(self) -> str:
         """

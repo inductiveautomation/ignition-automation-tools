@@ -35,6 +35,7 @@ class CommonTextInput(ComponentPiece):
         self._internal_input = ComponentPiece(
             locator=self._INTERNAL_INPUT_LOCATOR,
             driver=self.driver,
+            wait_timeout=0,
             parent_locator_list=self.locator_list,
             description="The internal <input> element, used primarily for Text Fields, or when the component contains "
                         "a quality overlay.",
