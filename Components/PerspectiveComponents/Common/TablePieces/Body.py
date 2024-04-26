@@ -1,8 +1,9 @@
 from typing import Optional, List, Tuple, Union
 
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support.wait import WebDriverWait
 
 from Components.BasicComponent import ComponentPiece
 from Helpers.IAExpectedConditions import IAExpectedConditions as IAec
@@ -224,53 +225,22 @@ class Body(ComponentPiece):
         return None
 
     def get_row_count(
-            self, include_expanded_subviews_in_count: bool = False, expected_count: Optional[int] = None) -> int:
+            self, include_expanded_subviews_in_count: bool = False) -> int:
         """
         Obtain a count of rows in the Table.
 
         :param include_expanded_subviews_in_count: A True value will include any expanded subviews as a row, while a
             value of False will only return a count of rows which reflects the native data.
-        :param expected_count: If supplied, the function will wait some short period of time until this number of rows
-            appears.
 
         :returns: A count of rows in the table, or possibly a count of rows which includes expanded subviews.
-        """
-        try:
-            return int(self.wait.until(IAec.function_returns_true(
-                custom_function=self._get_row_count,
-                function_args={
-                    "include_expanded_subviews_in_count": include_expanded_subviews_in_count,
-                    "expected_count": expected_count
-                }
-            )))
-        except TimeoutException:
-            return 0
-
-    def _get_row_count(self, include_expanded_subviews_in_count: bool, expected_count: Optional[int]) -> int:
-        """
-        Obtain a count of rows in the Table.
-
-        :param include_expanded_subviews_in_count: If True, we will include expanded subviews as part of the row count.
-            If False, expanded subviews will be omitted from the count, making the returned value a true reflection of
-            the underlying data.
-        :param expected_count: A count we expect the Table to have, and we will wait on reporting until this value is
-            found, or some period of time has elapsed.
         """
         try:
             rows = self._rows.find_all(wait_timeout=1)
             if not include_expanded_subviews_in_count:
                 rows = [row for row in rows if "subview" not in row.get_attribute("class")]
-            if expected_count is not None:
-                expected_count = int(expected_count)
-                if len(rows) == expected_count:
-                    return expected_count
-                else:
-                    return False
             return len(rows)
-        except StaleElementReferenceException:
-            return False
         except TimeoutException:
-            return False
+            return 0
 
     def get_row_data_by_row_index(self, zero_based_row_index: int) -> dict:
         """
@@ -366,3 +336,42 @@ class Body(ComponentPiece):
             parent_locator_list=self.locator_list,
             poll_freq=self.poll_freq).wait_on_text_condition(
                 text_to_compare=text, condition=TextCondition.EQUALS, wait_timeout=timeout)
+
+    def wait_for_row_count(
+            self,
+            include_expanded_subviews_in_count: bool = False,
+            expected_count: Optional[int] = None,
+            timeout: Optional[float] = None) -> int:
+        """
+        Obtain a count of rows in the Table.
+
+        :param include_expanded_subviews_in_count: A True value will include any expanded subviews as a row, while a
+            value of False will only return a count of rows which reflects the native data.
+        :param expected_count: If supplied, the function will wait some short period of time until this number of rows
+            appears.
+        :param timeout: The amount of time you are willing to wait for the Table to have the expected count of rows. A
+            value of 0 will result in an immediate return.
+
+        :returns: A count of rows in the table, or possibly a count of rows which includes expanded subviews.
+        """
+        cond_wait = WebDriverWait(driver=self.driver, timeout=timeout) if timeout is not None else self.wait
+        row_count = 0
+
+        def has_expected_row_count():
+            nonlocal row_count
+            nonlocal expected_count
+            nonlocal include_expanded_subviews_in_count
+            row_count = self.get_row_count(include_expanded_subviews_in_count=include_expanded_subviews_in_count)
+            if expected_count is None:
+                return True
+            else:
+                return row_count == expected_count
+
+        try:
+            cond_wait.until(
+                IAec.function_returns_true(
+                    custom_function=has_expected_row_count,
+                    function_args={}))
+        except TimeoutException:
+            pass
+        return row_count
