@@ -629,7 +629,8 @@ class _AlarmTable(Table, BasicPerspectiveComponent):
         :returns: The count of rows displayed on the current page of the Alarm Table.
         """
         # alarm tables have no concept of subview, so explicitly exclude subviews from the count
-        return self._alarm_table_body.get_row_count(include_expanded_subviews_in_count=False)
+        return self._alarm_table_body.get_row_count(
+            include_expanded_subviews_in_count=False)
 
     def get_count_of_results_matching_text_filter(self) -> int:
         """
@@ -924,6 +925,19 @@ class _AlarmTable(Table, BasicPerspectiveComponent):
         :returns: True, if the Alarm Table is currently displayed - False otherwise.
         """
         return self._alarm_table_toolbar.is_displayed()
+
+    def wait_for_row_count(
+            self, expected_count: Optional[int] = None):
+        """
+        Obtain a count of rows in the Alarm Table.
+
+        :param expected_count: If supplied, the function will wait some short period of time until this number of rows
+            appears.
+
+        :returns: A count of rows in the Alarm Table.
+        """
+        return self._alarm_table_body.wait_for_row_count(
+            include_expanded_subviews_in_count=False, expected_count=expected_count)
 
 
 class _AlarmTableBody(Body):

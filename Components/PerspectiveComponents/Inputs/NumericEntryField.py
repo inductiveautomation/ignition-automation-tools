@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Tuple, Any
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -39,11 +39,7 @@ def _zero_out(expected_value: Union[float, str]) -> Union[float, str]:
     return 0 if expected_value == "" else expected_value
 
 
-class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
-    """A Button-variant Perspective Numeric Entry Field, as distinct from the Direct or Protected variants."""
-    _APPLY_BUTTON_LOCATOR = (By.CSS_SELECTOR, "button.ia_button--primary")
-    _CANCEL_BUTTON_LOCATOR = (By.CSS_SELECTOR, "button.ia_button--secondary")
-    _MODAL_INPUT_LOCATOR = (By.TAG_NAME, "input")  # within modal
+class _NEF(BasicPerspectiveComponent, CommonTextInput):
 
     def __init__(
             self,
@@ -62,6 +58,51 @@ class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
             description=description,
             poll_freq=poll_freq)
         CommonTextInput.__init__(
+            self,
+            locator=locator,
+            driver=driver,
+            parent_locator_list=parent_locator_list,
+            wait_timeout=wait_timeout,
+            description=description,
+            poll_freq=poll_freq)
+
+    def wait_on_text_condition(
+            self,
+            text_to_compare: Optional[Any],
+            condition: NumericCondition,
+            wait_timeout: Optional[float] = None) -> str:
+        """
+        Obtain the text of this Numeric Entry Field, after potentially waiting some period of time for the Component to
+        display that text.
+
+        :param text_to_compare: The text to be used in conjunction with the supplied condition. If the supplied value
+            is None, then no wait will ever occur and the text of the component will be immediately returned.
+        :param condition: The condition to be used to compare the Component text to the provided text.
+        :param wait_timeout: The amount of time (in seconds) you are willing to wait for the Component to display
+            the specified text. If not supplied, this will default to the wait timeout supplied in the constructor
+            of the Component.
+
+        :returns: The text of the Component as a string, after potentially having waited for an expected text match.
+        """
+        return CommonTextInput.wait_on_text_condition(
+            self, text_to_compare=text_to_compare, condition=condition, wait_timeout=wait_timeout)
+
+
+class ButtonNEF(_NEF):
+    """A Button-variant Perspective Numeric Entry Field, as distinct from the Direct or Protected variants."""
+    _APPLY_BUTTON_LOCATOR = (By.CSS_SELECTOR, "button.ia_button--primary")
+    _CANCEL_BUTTON_LOCATOR = (By.CSS_SELECTOR, "button.ia_button--secondary")
+    _MODAL_INPUT_LOCATOR = (By.TAG_NAME, "input")  # within modal
+
+    def __init__(
+            self,
+            locator: Tuple[By, str],
+            driver: WebDriver,
+            parent_locator_list: Optional[List[Tuple[By, str]]] = None,
+            wait_timeout: float = 2,
+            description: Optional[str] = None,
+            poll_freq: float = 0.5):
+        _NEF.__init__(
             self,
             locator=locator,
             driver=driver,
@@ -246,7 +287,7 @@ class ButtonNEF(BasicPerspectiveComponent, CommonTextInput):
         self._modal_input.find().send_keys(text)
 
 
-class DirectNEF(BasicPerspectiveComponent, CommonTextInput):
+class DirectNEF(_NEF):
     """A Direct-variant Perspective Numeric Entry Field, as distinct from the Button or Protected variants."""
 
     def __init__(
@@ -257,20 +298,13 @@ class DirectNEF(BasicPerspectiveComponent, CommonTextInput):
             wait_timeout: float = 5,
             description: Optional[str] = None,
             poll_freq: float = 0.5):
-        BasicPerspectiveComponent.__init__(
+        _NEF.__init__(
             self,
-            locator=locator, 
-            driver=driver, 
-            parent_locator_list=parent_locator_list, 
+            locator=locator,
+            driver=driver,
+            parent_locator_list=parent_locator_list,
             wait_timeout=wait_timeout,
             description=description,
-            poll_freq=poll_freq)
-        CommonTextInput.__init__(
-            self,
-            locator=locator, 
-            driver=driver, 
-            parent_locator_list=parent_locator_list, 
-            wait_timeout=wait_timeout,
             poll_freq=poll_freq)
 
     def get_manual_entry_text(self) -> str:
@@ -368,7 +402,8 @@ class ProtectedNEF(DirectNEF):
             wait_timeout: float = 10,
             description: Optional[str] = None,
             poll_freq: float = 0.5):
-        super().__init__(
+        DirectNEF.__init__(
+            self,
             locator=locator,
             driver=driver,
             parent_locator_list=parent_locator_list,

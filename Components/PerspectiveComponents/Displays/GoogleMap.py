@@ -190,25 +190,43 @@ class GoogleMap(BasicPerspectiveComponent):
             """
             Clicks the dropdown menu version of the map type controls UI to expand the dropdown.
 
-            :raises TimeoutException: If the MapType UI is not found or dropdown is not displayed.
+            :raises TimeoutException: If the MapType UI is not found or dropdown failed to expand.
             """
-            if not self.map_type_dropdown_is_expanded():
-                self._dropdown_map_type_controls.click()
-                self.wait.until(method=IAec.function_returns_true(
-                    custom_function=self.map_type_dropdown_is_expanded,
-                    function_args={}))
+            self.wait.until(method=IAec.function_returns_true(
+                custom_function=self._expand_map_type_dropdown,
+                function_args={}))
+
+        def _expand_map_type_dropdown(self):
+            """
+            Clicks the dropdown menu of the map type controls until its dropdown is expanded.
+            """
+            try:
+                if not self.map_type_dropdown_is_expanded():
+                    self._dropdown_map_type_controls.click(wait_timeout=0, binding_wait_time=0.5)
+                return self.map_type_dropdown_is_expanded()
+            except TimeoutException:
+                return False
 
         def collapse_map_type_dropdown(self):
             """
             Clicks the dropdown menu version of the map type controls UI to collapse the dropdown.
 
-            :raises TimeoutException: If the MapType UI is not found or dropdown is not displayed.
+            :raises TimeoutException: If the MapType UI is not found or dropdown failed to collapse.
             """
-            if self.map_type_dropdown_is_expanded():
-                self._dropdown_map_type_controls.click()
-                self.wait.until(method=IAec.function_returns_false(
-                    custom_function=self.map_type_dropdown_is_expanded,
-                    function_args={}))
+            self.wait.until(method=IAec.function_returns_true(
+                custom_function=self._collapse_map_type_dropdown,
+                function_args={}))
+
+        def _collapse_map_type_dropdown(self):
+            """
+            Clicks the dropdown menu of the map type controls until its dropdown is not expanded.
+            """
+            try:
+                if self.map_type_dropdown_is_expanded():
+                    self._dropdown_map_type_controls.click(wait_timeout=0, binding_wait_time=0.5)
+                return not self.map_type_dropdown_is_expanded()
+            except TimeoutException:
+                return False
 
         def _set_map_base_type(self, map_type: MapType) -> None:
             """
@@ -331,7 +349,7 @@ class GoogleMap(BasicPerspectiveComponent):
             locator=self._MAP_TYPE_CONTROLS_LOCATOR,
             driver=driver,
             parent_locator_list=None,
-            wait_timeout=1,
+            wait_timeout=5,
             poll_freq=poll_freq)
         self._general_close_popup_button = ComponentPiece(
             locator=self._GENERAL_CLOSE_POPUP_BUTTON_LOCATOR,

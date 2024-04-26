@@ -203,21 +203,18 @@ class Table(ComponentPiece):
         return self._body.get_row_group_count()
 
     def get_count_of_rows(
-            self, include_expanded_subviews_in_count: bool = False, expected_count: Optional[int] = None) -> int:
+            self, include_expanded_subviews_in_count: bool = False) -> int:
         """
         Obtain a count of rows currently displayed in the Table.
 
         :param include_expanded_subviews_in_count: If True, subviews which are currently expanded will be counted as a
             row. If False, subviews will not be included in the returned count.
-        :param expected_count: If supplied, we will attempt to wait until the supplied count is displayed before
-            returning.
 
         :returns: A numeric count of rows currently displayed in the Table. This count may optionally contain expanded
             subviews.
         """
         return self._body.get_row_count(
-            include_expanded_subviews_in_count=include_expanded_subviews_in_count,
-            expected_count=expected_count)
+            include_expanded_subviews_in_count=include_expanded_subviews_in_count)
 
     def get_empty_message_text(self) -> str:
         """
