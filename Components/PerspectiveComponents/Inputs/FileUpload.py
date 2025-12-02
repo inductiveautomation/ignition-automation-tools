@@ -9,6 +9,7 @@ from Components.BasicComponent import BasicPerspectiveComponent, ComponentPiece
 from Components.Common.FileUpload import FileUpload as CommonFileUpload
 from Components.PerspectiveComponents.Common.ComponentModal import ComponentModal
 from Components.PerspectiveComponents.Common.Icon import CommonIcon
+from Helpers.Formatting import FilePathFormatting
 
 
 class FileUpload(BasicPerspectiveComponent, CommonFileUpload):
@@ -381,20 +382,21 @@ class FileUpload(BasicPerspectiveComponent, CommonFileUpload):
         except TimeoutException:
             return False
 
-    def upload_file_by_path(self, normalized_file_path: str) -> None:
+    def upload_file_by_path(self, file_path: str) -> None:
         """
         Upload an individual file by supplying a normalized file path.
 
-        :param normalized_file_path: An OS-agnostic string file path.
+        :param file_path: A string file path.
         """
-        self.upload_files(normalized_file_path_list=[normalized_file_path])
+        self.upload_files(path_list=[file_path])
 
-    def upload_files(self, normalized_file_path_list: List[str]) -> None:
+    def upload_files(self, path_list: List[str]) -> None:
         """
-        Upload a list of files by supplying normalized file paths.
+        Upload a list of files by supplying a list of file paths.
 
-        :param normalized_file_path_list: A list of OS-agnostic string file paths.
+        :param path_list: A list of string file paths.
         """
+        normalized_file_path_list = [FilePathFormatting.system_safe_file_path(file_path) for file_path in path_list]
         self.driver.execute_script('arguments[0].style.display="block";', self._find_file_input())
         self._find_file_input().send_keys('\n'.join(normalized_file_path_list))
         self.driver.execute_script('arguments[0].style.display="none";', self._find_file_input())

@@ -73,7 +73,8 @@ class IASelenium:
         Close any browser tabs which are not the 0th tab, and then switch to the 0th tab.
         """
         while self.get_tab_count() > 1:
-            self.switch_to_tab_by_index(zero_based_index=1)
+            max_tab = self.get_tab_count() - 1
+            self.switch_to_tab_by_index(zero_based_index=max_tab)
             self.close_current_tab()
         self.switch_to_tab_by_index(zero_based_index=0)
 
@@ -342,7 +343,7 @@ class IASelenium:
         screenshot_folder = f'{os.getcwd()}/{directory}'
         if not os.path.exists(screenshot_folder):
             os.mkdir(screenshot_folder)
-        safe_path = FilePathFormatting.system_safe_file_path(screenshot_folder, screenshot_title)
+        safe_path = FilePathFormatting.system_safe_file_path(f'{screenshot_folder}/{screenshot_title}')
         self.driver.save_screenshot(safe_path)
         self.logger.info(msg=f'Screenshot taken: {safe_path}')
         return safe_path
@@ -365,7 +366,7 @@ class IASelenium:
         screenshot_folder = f'{os.getcwd()}/{directory}'
         if not os.path.exists(screenshot_folder):
             os.mkdir(screenshot_folder)
-        safe_path = FilePathFormatting.system_safe_file_path(screenshot_folder, screenshot_title)
+        safe_path = FilePathFormatting.system_safe_file_path(f'{screenshot_folder}/{screenshot_title}')
         print(f'Screenshot path: \'{safe_path}\'')
         self.driver.save_screenshot(safe_path)
         return safe_path

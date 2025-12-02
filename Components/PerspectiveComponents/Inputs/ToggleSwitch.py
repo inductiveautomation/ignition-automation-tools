@@ -70,7 +70,7 @@ class ToggleSwitch(BasicPerspectiveComponent):
 
         :return: True, if the Toggle Switch is currently selected (on/True/active) - False otherwise.
         """
-        return self._TS_SELECTED_CLASS in self.ts_thumb.find(wait_timeout=0).get_attribute('class')
+        return self._TS_SELECTED_CLASS in self.ts_thumb.find().get_attribute('class')
 
     def set_switch(self, should_be_selected: bool = True, binding_wait_time: float = 0.5) -> None:
         """

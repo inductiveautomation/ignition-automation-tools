@@ -251,7 +251,7 @@ class PowerChart(BasicPerspectiveComponent):
                 return self._time_axis_labels.get_css_property(property_name=property_name)
             except TimeoutException as toe:
                 raise TimeoutException(msg="No labels are present for the X (time) axis.") from toe
-        
+
         def get_y_axis_html_class(self) -> str:
             """
             Obtain the HTML class of the Y axis.
@@ -321,12 +321,6 @@ class PowerChart(BasicPerspectiveComponent):
                 return len(self._x_axis_grid_line.find_all())
             except TimeoutException:
                 return 0
-            except StaleElementReferenceException as sere:
-                if not _already_attempted:
-                    return self.get_count_of_x_axis_grid_lines(
-                        _already_attempted=True)
-                else:
-                    raise sere
 
         def get_count_of_y_axis_grid_lines(self, _already_attempted=False) -> int:
             """
@@ -340,12 +334,6 @@ class PowerChart(BasicPerspectiveComponent):
                 return len(self._y_axis_grid_line.find_all())
             except TimeoutException:
                 return 0
-            except StaleElementReferenceException as sere:
-                if not _already_attempted:
-                    return self.get_count_of_y_axis_grid_lines(
-                        _already_attempted=True)
-                else:
-                    raise sere
 
         def get_css_property_from_x_axis_grid(self, property_name: Union[CSSPropertyValue, str]) -> str:
             """
@@ -359,8 +347,6 @@ class PowerChart(BasicPerspectiveComponent):
             """
             try:
                 return self._x_axis_grid_line.get_css_property(property_name=property_name)
-            except StaleElementReferenceException:
-                return self.get_css_property_from_x_axis_grid(property_name=property_name)
             except TimeoutException as toe:
                 raise TimeoutException(
                     msg="No grid line was found for the X axis.") from toe
@@ -377,9 +363,6 @@ class PowerChart(BasicPerspectiveComponent):
             """
             try:
                 return self._y_axis_grid_line.get_css_property(property_name=property_name)
-            except StaleElementReferenceException:
-                return self.get_css_property_from_y_axis_grid(
-                    property_name=property_name)
             except TimeoutException as toe:
                 raise TimeoutException(
                     msg="No grid line was found for the Y axis.") from toe

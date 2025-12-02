@@ -1,9 +1,12 @@
+import functools
+import inspect
 from enum import Enum
 from time import sleep
-from typing import Optional, Union, List, Tuple, Any
+from typing import Optional, Union, List, Tuple, Any, Callable
 
 from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException, \
     ElementNotInteractableException
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -67,6 +70,23 @@ class ComponentPiece:
         self._update_locator_list()
         self.poll_freq = poll_freq
 
+    @staticmethod
+    def retry_on_stale_element(retry_attempts: int = 3):
+        def decorator(call: Callable) -> Callable:
+            @functools.wraps(call)
+            def wrapper(self, *args, **kwargs):
+                for attempt in range(retry_attempts):
+                    try:
+                        return call(self, *args, **kwargs)
+                    except StaleElementReferenceException:
+                        pass
+                # final attempt
+                return call(self, *args, **kwargs)
+            # Preserve signature so pytest can see fixture parameters
+            wrapper.__signature__ = inspect.signature(call)
+            return wrapper
+        return decorator
+
     def click(self, wait_timeout: Optional[Union[int, float]] = None, binding_wait_time: float = 0) -> None:
         """
         Click the component.
@@ -86,6 +106,7 @@ class ComponentPiece:
             message="The element never became clickable.")
         self.wait_on_binding(time_to_wait=binding_wait_time)
 
+    @retry_on_stale_element()
     def click_with_offset(self, x_offset: int, y_offset: int) -> None:
         """
         Click this element, but offset by some pixel count.
@@ -106,6 +127,7 @@ class ComponentPiece:
             IASelenium(self.driver).take_screenshot_of_element(self.find())
             raise ecie
 
+    @retry_on_stale_element()
     def double_click(self, binding_wait_time: float = 0) -> None:
         """
         Double-click the component.
@@ -168,6 +190,7 @@ class ComponentPiece:
             raise TimeoutException(
                 msg=f"Unable to locate any elements with CSS locator: {css_locator}{description}") from toe
 
+    @retry_on_stale_element()
     def get_computed_height(self, include_units: bool = False) -> str:
         """
         Get the computed height of the component. Must return as a string because of the possibility of included units.
@@ -188,6 +211,7 @@ class ComponentPiece:
             height = height.split("px")[0]
         return height
 
+    @retry_on_stale_element()
     def get_computed_width(self, include_units: bool = False) -> str:
         """
         Get the computed width of the component. Must return as a string because of the possibility of included units.
@@ -208,6 +232,7 @@ class ComponentPiece:
             width = width.split("px")[0]
         return width
 
+    @retry_on_stale_element()
     def get_css_property(self, property_name: Union[CSSPropertyValue, str]) -> str:
         """
         Get a CSS property value of the Web Element defined by this component.
@@ -237,6 +262,7 @@ class ComponentPiece:
         """
         return _LocatorBuilder.get_xpath_locator(locators=self.locator_list)
 
+    @retry_on_stale_element()
     def get_origin(self) -> Point:
         """
         Get the Cartesian Coordinate of the upper-left corner of the component, measured from the
@@ -248,6 +274,7 @@ class ComponentPiece:
         rect = self.find().rect
         return Point(x=rect['x'], y=rect['y'])
 
+    @retry_on_stale_element()
     def get_termination(self) -> Point:
         """
         Get the Cartesian Coordinate of the bottom-right corner of the component, measured from the
@@ -259,6 +286,7 @@ class ComponentPiece:
         rect = self.find().rect
         return Point(rect['x'] + rect['width'], rect['y'] + rect['height'])
 
+    @retry_on_stale_element()
     def get_text(self) -> str:
         """
         Get the text of this component.
@@ -268,6 +296,7 @@ class ComponentPiece:
         """
         return self.find().text
 
+    @retry_on_stale_element()
     def hover(self) -> None:
         """
         Hover over this component.
@@ -276,12 +305,14 @@ class ComponentPiece:
         """
         ActionChains(self.driver).move_to_element(self.find()).perform()
 
+    @retry_on_stale_element()
     def release_focus(self) -> None:
         """
         Forces a blur() event on the Web Element.
         """
         self.driver.execute_script('arguments[0].blur()', self.find())
 
+    @retry_on_stale_element()
     def right_click(self, binding_wait_time: Optional[float] = 0) -> None:
         """
         Right-click this component.
@@ -293,6 +324,7 @@ class ComponentPiece:
         IASelenium(driver=self.driver).right_click(web_element=self.find())
         self.wait_on_binding(time_to_wait=binding_wait_time)
 
+    @retry_on_stale_element()
     def scroll_to_element(self, align_to_top: bool = True) -> None:
         """
         Vertical scroll to this element in the viewport.
@@ -431,6 +463,7 @@ class ComponentPiece:
         """
         sleep(time_to_wait)
 
+    @retry_on_stale_element()
     def _click(self) -> bool:
         """
         Attempt to click an item, and continue attempting to do so until the item becomes "interactable".
@@ -446,6 +479,7 @@ class ComponentPiece:
         except ElementNotInteractableException:
             return False
 
+    @retry_on_stale_element()
     def _has_text(self, text: str) -> bool:
         """
         Used to determine if a Web Element currently has the exact supplied text.

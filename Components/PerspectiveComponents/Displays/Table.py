@@ -6,6 +6,7 @@ from selenium.common.exceptions import StaleElementReferenceException, NoSuchEle
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 
 from Components.BasicComponent import ComponentPiece, BasicPerspectiveComponent
 from Components.Common.TextInput import CommonTextInput
@@ -98,6 +99,31 @@ class _TableBody(Body):
             parent_locator_list=self.locator_list,
             wait_timeout=0.5,
             poll_freq=poll_freq)
+        self._active_editing_cell = ComponentPiece(
+            driver=driver,
+            locator=(By.CSS_SELECTOR, "div>textarea"),
+            parent_locator_list=self.locator_list
+        )
+
+    def cell_is_open_for_editing(self, zero_based_row_index: int, column_id: str) -> bool:
+        """
+        Determine if the cell of a Table is open for editing.
+
+        :param zero_based_row_index: The zero-based index of the row to check.
+        :param column_id: The field in use by the column to be checked.
+
+        :returns: True, if the cell is open for editing; False otherwise.
+        """
+        _locator = (By.CSS_SELECTOR, f'{self.__get_row_css_by_row_index(row_index=zero_based_row_index)} '
+                                     f'{self.__get_column_css_by_column_id(column_id=column_id)} textarea.ia_textArea')
+        try:
+            return ComponentPiece(
+                locator=_locator,
+                driver=self.driver,
+                parent_locator_list=self.locator_list,
+                poll_freq=self.poll_freq).find(wait_timeout=0) is not None
+        except TimeoutException:
+            return False
 
     def cell_is_root_selection(self, row_index: int, column_index: int) -> bool:
         """
@@ -121,6 +147,26 @@ class _TableBody(Body):
         except StaleElementReferenceException:
             return self.cell_is_root_selection(row_index=row_index, column_index=column_index)
         except NoSuchElementException:
+            return False
+
+    def cell_is_selected_by_row_id_column_id(self, row_id: int, column_id: str) -> bool:
+        """
+        Determine if the cell of a Table is selected based on row id and column id.
+
+        :param row_id: The unique identifier of the row to check.
+        :param column_id: The field in use by the column to be checked.
+
+        :returns: True, if the cell is selected; False otherwise.
+        """
+        _locator = (By.CSS_SELECTOR, f'{self.__get_row_css_by_row_id(row_id=row_id)} '
+                                     f'{self.__get_column_css_by_column_id(column_id=column_id)} div.t-selected')
+        try:
+            return ComponentPiece(
+                locator=_locator,
+                driver=self.driver,
+                parent_locator_list=self.locator_list,
+                poll_freq=self.poll_freq).find(wait_timeout=0) is not None
+        except TimeoutException:
             return False
 
     def cell_is_selected(self, row_index: int, column_index: int) -> bool:
@@ -244,6 +290,42 @@ class _TableBody(Body):
         IAAssert.is_true(
             value=self.subview_is_expanded(row_index=row_index),
             failure_msg=f"Failed to expand a subview for row {row_index}.")
+
+    def get_row_index_of_active_editing_cell(self) -> int | None:
+        """
+        Retrieve the row index of the active editing cell.
+
+        :returns: The row index of the active editing cell.
+                     If no active editing cell is found, returns None.
+        """
+        try:
+            return self._get_row_index(web_element=self._active_editing_cell.find(wait_timeout=0))
+        except TimeoutException:
+            return None
+
+    def get_column_id_of_active_editing_cell(self) -> str | None:
+        """
+        Retrieve the column id of the active editing cell.
+
+        :returns: The column id of the active editing cell.
+                     If no active editing cell is found, returns None.
+        """
+        try:
+            cell = self._active_editing_cell.find(wait_timeout=0)
+            return cell.get_attribute(name="data-column-id")
+        except TimeoutException:
+            return None
+
+    def get_text_of_active_editing_cell(self) -> str | None:
+        """
+        Get the text content of the active editing cell.
+
+        :returns: The text content of the active editing cell if it exists, otherwise None.
+        """
+        try:
+            return self._active_editing_cell.find(wait_timeout=0).text
+        except TimeoutException:
+            return None
 
     def get_count_of_selected_rows(self) -> int:
         """
@@ -395,9 +477,6 @@ class _TableBody(Body):
         :param commit_value: A boolean flag indicating whether to commit changes immediately or not.
             If True, changes will be committed by appending Keys.ENTER to it after setting the cell data.
             If False, changes will not be committed, allowing for further modifications before committing.
-
-        :raises: TimeoutException: If the cell is not already in an editable state; this function does not prepare the
-        cell for editing.
         """
 
         _locator = (By.CSS_SELECTOR, f'{self.__get_row_css_by_row_index(row_index=zero_based_row_index)} '
@@ -439,8 +518,9 @@ class _TableBody(Body):
             driver=self.driver,
             parent_locator_list=self.locator_list,
             poll_freq=self.poll_freq)
-        min_index = min([int(row.get_attribute('data-row-index')) for row in rows.find_all()])
-        max_index = max([int(row.get_attribute('data-row-index')) for row in rows.find_all()])
+        row_indices = [self._get_row_index(web_element=row) for row in rows.find_all()]
+        min_index = min(row_indices)
+        max_index = max(row_indices)
         if min_index > row_index:
             self._scroll_to_row(row_index=min_index, align_to_top=False)
             self.scroll_to_row(row_index=row_index, align_to_top=align_to_top)
@@ -482,6 +562,10 @@ class _TableBody(Body):
         except StaleElementReferenceException:
             return self.get_count_of_selected_rows()
 
+    @classmethod
+    def _get_row_index(cls, web_element: WebElement) -> int:
+        return int(web_element.get_attribute("data-row-id"))
+
     def _scroll_to_row(self, row_index: int, align_to_top: bool = False) -> None:
         """
         Scroll the Table so that the specified row is visible.
@@ -500,13 +584,17 @@ class _TableBody(Body):
         row.scroll_to_element(align_to_top=align_to_top)
         row.wait_on_binding()
 
+    def __get_column_css_by_column_id(self, column_id: Union[int, str]) -> str:
+        """Obtain the CSS which defines a column based on its id."""
+        return f'{self._CELL_LOCATOR[1]}[data-column-id="{column_id}"]'
+
     def __get_column_css_by_index(self, column_index: Union[int, str]) -> str:
         """Obtain the CSS which defines a column based on its index."""
         return f'{self._CELL_LOCATOR[1]}[data-column-index="{column_index}"]'
 
-    def __get_column_css_by_column_id(self, column_id: Union[int, str]) -> str:
-        """Obtain the CSS which defines a column based on its id."""
-        return f'{self._CELL_LOCATOR[1]}[data-column-id="{column_id}"]'
+    def __get_row_css_by_row_id(self, row_id: Union[int, str]) -> str:
+        """Obtain the CSS which defines a row based on its index."""
+        return f'{self._ROW_GROUP_LOCATOR[1]}[data-row-id="{row_id}"] {self._ROW_LOCATOR[1]}'
 
     def __get_row_css_by_row_index(self, row_index: Union[int, str]) -> str:
         """Obtain the CSS which defines a row based on its index."""
@@ -767,6 +855,33 @@ class Table(CommonTable, BasicPerspectiveComponent):
         """
         return self._body.cell_is_root_selection(row_index=row_index, column_index=column_index)
 
+    def cell_is_open_for_editing(self, zero_based_row_index: int, column_id: str, ) -> bool:
+        """
+        Determine if the cell of a Table is open for editing.
+
+        :param zero_based_row_index: The zero-based index of the row to check.
+        :param column_id: The field in use by the column to be checked.
+
+        :returns: True, if the cell is open for editing; False otherwise.
+
+        :raises TimeoutException: If the supplied row index or column ID is invalid.
+        """
+        return self._body.cell_is_open_for_editing(zero_based_row_index=zero_based_row_index, column_id=column_id)
+
+    def cell_is_selected_by_row_id_column_id(self, row_id: int, column_id: str, ) -> bool:
+        """
+        Determine if the cell of a Table is selected based on the provided row ID and column ID.
+
+        :param row_id: The unique identifier of the row to check.
+        :param column_id: The field in use by the column to be checked.
+
+        :returns: True, if the cell is selected; False otherwise.
+
+        :raises TimeoutException: If the supplied row ID or column ID is invalid.
+        """
+        return self._body.cell_is_selected_by_row_id_column_id(
+            row_id=row_id, column_id=column_id)
+
     def cell_is_selected(self, row_index: int, column_index: int) -> bool:
         """
         Determine if a specified cell is currently part of the active selection of the Table.
@@ -1024,6 +1139,38 @@ class Table(CommonTable, BasicPerspectiveComponent):
         :returns: True, if the Table is currently displaying a Footer - False otherwise.
         """
         return self._footer.footer_is_present()
+
+    def get_row_index_of_active_editing_cell(self) -> int:
+        """
+        Retrieve the row index of the active editing cell.
+
+        :returns: The row index of the active editing cell.
+                     If no active editing cell is found, returns None.
+
+        :raises TimeoutException: If the active editing cell is not found within the specified timeout.
+        """
+        return self._body.get_row_index_of_active_editing_cell()
+
+    def get_column_id_of_active_editing_cell(self) -> str:
+        """
+        Retrieve the column id of the active editing cell.
+
+        :returns: The column id of the active editing cell.
+                     If no active editing cell is found, returns None.
+
+        :raises TimeoutException: If the active editing cell is not found within the specified timeout.
+        """
+        return self._body.get_column_id_of_active_editing_cell()
+
+    def get_text_of_active_editing_cell(self) -> str:
+        """
+        Get the text content of the active editing cell.
+
+        :returns: The text content of the active editing cell if it exists, otherwise None.
+
+        :raises TimeoutException: If the active editing cell is not found within the specified timeout.
+        """
+        return self._body.get_text_of_active_editing_cell()
 
     def get_active_page(self) -> int:
         """

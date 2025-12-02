@@ -1,14 +1,14 @@
 from enum import Enum
 from typing import List, Optional, Tuple, Union
 
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
-from Components.BasicComponent import ComponentPiece
+from Components.BasicComponent import BasicComponent, ComponentPiece
 from Helpers.IAAssert import IAAssert
 from Helpers.IAExpectedConditions import IAExpectedConditions as IAec
 
@@ -131,6 +131,7 @@ class Pager(ComponentPiece):
             as_type=int,
             failure_msg="We failed to get to the next page after clicking the next page chevron.")
 
+    @BasicComponent.retry_on_stale_element()
     def click_page_number(self, desired_page: Union[int, str]) -> None:
         """
         Click a page number within the Pager.
@@ -165,6 +166,7 @@ class Pager(ComponentPiece):
             as_type=int,
             failure_msg="We failed to get to the previous page after clicking the previous page chevron.")
 
+    @BasicComponent.retry_on_stale_element()
     def first_page_button_is_displayed(self) -> bool:
         """
         Determine if the 'First' page option is displayed in the Pager.
@@ -176,6 +178,7 @@ class Pager(ComponentPiece):
         except TimeoutException:
             return False
 
+    @BasicComponent.retry_on_stale_element()
     def first_page_button_is_enabled(self) -> bool:
         """
         Determine if the 'First' page option is enabled in the Pager.
@@ -196,6 +199,7 @@ class Pager(ComponentPiece):
         """
         return int(self._active_page.get_text())
 
+    @BasicComponent.retry_on_stale_element()
     def get_all_listed_pages(self) -> List[int]:
         """
         Obtain all displayed page numbers.
@@ -207,6 +211,7 @@ class Pager(ComponentPiece):
         except TimeoutException:
             return []
 
+    @BasicComponent.retry_on_stale_element()
     def get_all_row_display_options(self) -> List[str]:
         """
         Obtain all selection options form the dropdown which controls how many rows may be displayed in the Table.
@@ -218,6 +223,7 @@ class Pager(ComponentPiece):
         """
         return [_.text for _ in Select(webelement=self._row_count_select.find()).options]
 
+    @BasicComponent.retry_on_stale_element()
     def get_last_displayed_page_number(self) -> int:
         """
         Obtain the number of the last page available in the Pager. This value may not be the count of Pages of data,
@@ -232,6 +238,7 @@ class Pager(ComponentPiece):
         """
         return int(self._page_numbers.find_all()[-1].text)
 
+    @BasicComponent.retry_on_stale_element()
     def get_selected_row_count_option_from_dropdown(self) -> int:
         """
         Obtain the currently selected VALUE from the dropdown which dictates how many rows are displayed.
@@ -244,6 +251,7 @@ class Pager(ComponentPiece):
         """
         return int(Select(webelement=self._row_count_select.find()).first_selected_option.text.split(" ")[0])
 
+    @BasicComponent.retry_on_stale_element()
     def jump_input_is_displayed(self) -> bool:
         """
         Determine if the input which allows for a user to type a page number is displayed.
@@ -255,6 +263,7 @@ class Pager(ComponentPiece):
         except TimeoutException:
             return False
 
+    @BasicComponent.retry_on_stale_element()
     def jump_to_page(self, page_to_jump_to: Union[int, str], binding_wait_time: float = 1) -> None:
         """
         Use the page jump input field to go to a specific page in the Table.
@@ -278,6 +287,7 @@ class Pager(ComponentPiece):
                 as_type=int,
                 failure_msg=f"Failed to jump to the specified page ({page_to_jump_to}).")
 
+    @BasicComponent.retry_on_stale_element()
     def last_page_button_is_displayed(self) -> bool:
         """
         Determine if the 'Last' page option is displayed in the Pager.
@@ -304,6 +314,7 @@ class Pager(ComponentPiece):
         except TimeoutException:
             return False
 
+    @BasicComponent.retry_on_stale_element()
     def next_page_chevron_is_enabled(self) -> bool:
         """
         Determine if the next page chevron is enabled.
@@ -313,6 +324,7 @@ class Pager(ComponentPiece):
         # .is_enabled() does not work here because it's just a <div>
         return "disabled" not in self._next_page_chevron.find().get_attribute("class")
 
+    @BasicComponent.retry_on_stale_element()
     def is_displayed(self, location: Location = Location.BOTTOM) -> bool:
         """
         Determine if the specified Pager is displayed within the Table.
@@ -331,6 +343,7 @@ class Pager(ComponentPiece):
         except TimeoutException:
             return False
 
+    @BasicComponent.retry_on_stale_element()
     def is_hidden(self) -> bool:
         """
         Determine if the Pager is currently hidden.
@@ -353,6 +366,7 @@ class Pager(ComponentPiece):
         except TimeoutException:
             return False
 
+    @BasicComponent.retry_on_stale_element()
     def page_number_is_displayed(self, desired_page: Union[int, str]) -> bool:
         """
         Determine if a specific page number is currently displayed.
@@ -365,6 +379,7 @@ class Pager(ComponentPiece):
         """
         return str(desired_page) in [_.text for _ in self._page_numbers.find_all()]
 
+    @BasicComponent.retry_on_stale_element()
     def previous_page_chevron_is_enabled(self) -> bool:
         """
         Determine if the previous page chevron is enabled.
@@ -375,6 +390,7 @@ class Pager(ComponentPiece):
         """
         return "disabled" not in self._previous_page_chevron.find().get_attribute("class")
 
+    @BasicComponent.retry_on_stale_element()
     def row_select_dropdown_is_displayed(self) -> bool:
         """
         Determine if the dropdown which allows for specifying a row count to display is displayed.
@@ -383,9 +399,10 @@ class Pager(ComponentPiece):
         """
         try:
             return self._row_count_select.find().is_displayed()
-        except (TimeoutException, StaleElementReferenceException):
+        except TimeoutException:
             return False
 
+    @BasicComponent.retry_on_stale_element()
     def set_displayed_row_count(self, count_of_rows: Union[int, str], attempted=False) -> None:
         """
         Set the number of displayed rows in the Table. The count of rows must be a valid value from the
@@ -412,6 +429,7 @@ class Pager(ComponentPiece):
             as_type=int,
             failure_msg="We failed to specify a count of rows to select.")
 
+    @BasicComponent.retry_on_stale_element()
     def _last_page_button_is_enabled(self) -> bool:
         """Determine if the 'Last' page button is enabled."""
         return 'disabled' not in self._last_page_button.find().get_attribute('class')

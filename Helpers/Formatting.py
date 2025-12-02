@@ -9,16 +9,15 @@ class FilePathFormatting:
     """
 
     @staticmethod
-    def system_safe_file_path(exec_dir: str, file_path: str) -> str:
+    def system_safe_file_path(file_path: str) -> str:
         """
         Attempts to take a standard string file path and make it work across any operating system.
 
-        :param exec_dir: The execution directory to be used in constructing the file path.
         :param file_path: The path of the file.
 
         :returns: A platform-agnostic path to a file.
         """
-        return str(Path(os.path.join(exec_dir, file_path)).resolve())
+        return str(Path(file_path).resolve())
 
     @staticmethod
     def create_incremented_file_path(file_path: str) -> str:

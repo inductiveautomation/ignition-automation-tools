@@ -290,17 +290,37 @@ class CommonDateTimePicker(ComponentPiece):
             driver=driver,
             parent_locator_list=self.locator_list,
             poll_freq=poll_freq)
+        self.previous_second_chevron = ComponentPiece(
+            locator=self._PREVIOUS_SECOND_SPINNER_LOCATOR,
+            driver=driver,
+            parent_locator_list=self.locator_list,
+            poll_freq=poll_freq)
         self.previous_minute_chevron = ComponentPiece(
             locator=self._PREVIOUS_MINUTE_SPINNER_LOCATOR,
             driver=driver,
             parent_locator_list=self.locator_list,
             poll_freq=poll_freq)
         self._hours_input = CommonTextInput(
-            locator=self._HOURS_INPUT_LOCATOR, driver=driver, parent_locator_list=parent_locator_list, wait_timeout=1)
+            locator=self._HOURS_INPUT_LOCATOR,
+            driver=driver,
+            parent_locator_list=parent_locator_list,
+            wait_timeout=1,
+            description="The hours input field of the DateTimePicker. This piece of the component is only displayed "
+                        "while a format which include hours is in use.")
         self._minutes_input = CommonTextInput(
-            locator=self._MINUTES_INPUT_LOCATOR, driver=driver, parent_locator_list=parent_locator_list, wait_timeout=1)
+            locator=self._MINUTES_INPUT_LOCATOR,
+            driver=driver,
+            parent_locator_list=parent_locator_list,
+            wait_timeout=1,
+            description="The minutes input field of the DateTimePicker. This piece of the component is only displayed "
+                        "while a format which include minutes is in use.")
         self._seconds_input = CommonTextInput(
-            locator=self._SECONDS_INPUT_LOCATOR, driver=driver, parent_locator_list=parent_locator_list, wait_timeout=1)
+            locator=self._SECONDS_INPUT_LOCATOR,
+            driver=driver,
+            parent_locator_list=parent_locator_list,
+            wait_timeout=1,
+            description="The seconds input field of the DateTimePicker. This piece of the component is only displayed "
+                        "while a format which include seconds is in use.")
         self._am_pm_picker = ComponentPiece(
             locator=self._AM_PM_PICKER_LOCATOR, driver=driver, parent_locator_list=parent_locator_list, wait_timeout=1)
         self._selected_days = ComponentPiece(
@@ -532,7 +552,7 @@ class CommonDateTimePicker(ComponentPiece):
         if seconds is not None:
             current_seconds = int(self.get_seconds())
             if self._seconds_input.find().is_enabled():
-                target = self.previous_minute_chevron if int(seconds) < int(current_seconds) else \
+                target = self.previous_second_chevron if int(seconds) < int(current_seconds) else \
                     self.next_second_chevron
                 while current_seconds != int(seconds):
                     target.click(binding_wait_time=0.5)

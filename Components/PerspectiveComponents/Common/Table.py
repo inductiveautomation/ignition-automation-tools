@@ -333,3 +333,25 @@ class Table(ComponentPiece):
         :raises TimeoutException: If no column exists with the supplied index, or if the Table contains no data.
         """
         self._header.hover_over_column_in_header(column_index=column_index)
+
+    def wait_for_row_count(
+            self,
+            include_expanded_subviews_in_count: bool = False,
+            expected_count: Optional[int] = None,
+            timeout: Optional[float] = None):
+        """
+        Obtain a count of rows in the Table.
+
+        :param include_expanded_subviews_in_count: If True, expanded Subviews will be included in the count fo rows.
+        :param expected_count: If supplied, the function will wait some short period of time until this number of rows
+            appears.
+        :param timeout: How long to wait up to for the table to have the expected count. A value of None will fall back
+            to using the wait configured for the component. A value of 0 will immediately return the count of rows
+            without waiting.
+
+        :returns: A count of rows in the Alarm Table.
+        """
+        return self._body.wait_for_row_count(
+            include_expanded_subviews_in_count=include_expanded_subviews_in_count,
+            expected_count=expected_count,
+            timeout=timeout)

@@ -7,7 +7,7 @@ from Components.BasicComponent import ComponentPiece
 
 class ChromePrintPreviewPage:
     """Interface for the print preview page implemented in Chrome."""
-    CANCEL_BUTTON_LOCATOR = (By.CSS_SELECTOR, 'div.controls > cr-button.cancel-button')
+    CANCEL_BUTTON_LOCATOR = (By.CSS_SELECTOR, 'cr-button.cancel-button')
     PRINT_PREVIEW_APP_LOCATOR = (By.CSS_SELECTOR, 'print-preview-app')
     PRINT_PREVIEW_BUTTON_STRIP_LOCATOR = (By.CSS_SELECTOR, 'print-preview-button-strip')
     SIDE_BAR_LOCATOR = (By.ID, 'sidebar')

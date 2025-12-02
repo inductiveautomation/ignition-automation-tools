@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from Components.BasicComponent import BasicComponent, ComponentPiece
+from Helpers.Formatting import FilePathFormatting
 
 
 class FileUpload(BasicComponent):
@@ -60,10 +61,10 @@ class FileUpload(BasicComponent):
         """
         return "disabled" not in self._button.find().get_attribute("class")
 
-    def upload_file_by_path(self, normalized_file_path: str) -> None:
+    def upload_file_by_path(self, file_path: str) -> None:
         """
         Supply the location of a file to be uploaded.
 
-        :param normalized_file_path: The normalized (OS-agnostic) path to the file to be uploaded.
+        :param file_path: The path to the file to be uploaded.
         """
-        self._input.find().send_keys(normalized_file_path)
+        self._input.find().send_keys(FilePathFormatting.system_safe_file_path(file_path))

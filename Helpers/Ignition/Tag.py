@@ -2,7 +2,7 @@ import copy
 import json
 import re
 from enum import Enum
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional
 
 from Helpers.Ignition.Alarm import AlarmHelper, AlarmDefinition
 
@@ -201,8 +201,7 @@ class _BaseTag(object):
 
     @staticmethod
     def _to_camel_case(name):
-        init, *temp = name.split(
-            '_')
+        init, *temp = name.split('_')
         return ''.join(
             [init.lower(), *map(
                 str.title,
@@ -299,8 +298,8 @@ class _ComplexTag(_BaseTag):
                 if self.to_dict()[my_key] != expected_tag.to_dict()[my_key]:
                     diff_values[my_key] = {'actual': self.to_dict()[my_key], 'expected': expected_tag.to_dict()[my_key]}
         if 'tags' in diff_values:
-            diff_values['tags'] = self.get_tag_differences(actual=diff_values['tags']['actual'],
-                                                           expected=diff_values['tags']['expected'])
+            diff_values['tags'] = self.get_tag_differences(actual=[diff_values['tags']['actual']],
+                                                           expected=[diff_values['tags']['expected']])
 
         return diff_values
 
@@ -406,7 +405,7 @@ class TagHelper:
         name = tag_configs.get('name')
         if 'path' in tag_configs:
             provider = f'[{tag_configs.get("path").get("source")}]'
-            path = TagHelper._process_path(tag_configs.get('path', '').get('pathParts', ''))
+            path = TagHelper._process_path(tag_configs.get('path', {}).get('pathParts', ''))
         match tag_configs.get('tagType'):
             case 'UdtInstance':
                 tag = UdtInstance(name=name, provider=provider, path=path, type_id='')
@@ -432,7 +431,7 @@ class TagHelper:
             name = response_json.get('name')
             if 'path' in response_json:
                 provider = f'[{response_json.get("path").get("source")}]'
-                path = TagHelper._process_path(response_json.get('path', '').get('pathParts', ''))
+                path = TagHelper._process_path(response_json.get('path', {}).get('pathParts', ''))
             if response_json.get('tagType') == 'UdtInstance':
                 tag = UdtInstance(name=name, provider=provider, path=path, type_id='')
             elif response_json.get('tagType') == 'UdtType':
