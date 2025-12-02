@@ -145,7 +145,7 @@ class NotificationHelper:
         :raises IndexError: If the supplied index is invalid based on the number of displayed notifications.
         """
         return self._icon.find_all(
-            timeout=0)[notification_index].find_element(By.TAG_NAME, "symbol").get_attribute("id")
+            timeout=0)[notification_index].get_attribute("class")
 
     def get_summary(self, notification_index: int = 0) -> str:
         """

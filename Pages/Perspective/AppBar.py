@@ -37,7 +37,6 @@ class AppBar(PagePiece):
 
     _ANIMATION_DELAY_IN_SECONDS = 1.5
     _ABOUT_BUTTON_LOCATOR = (By.CSS_SELECTOR, "div svg.about-icon")
-    _ABOUT_BUTTON_LOCAL_SYMBOL_LOCATOR = (By.CSS_SELECTOR, "symbol")
     _GATEWAY_PANEL_LOCATOR = (By.ID, 'gateway-nav')
     _PROJECT_PANEL_LOCATOR = (By.ID, 'project-nav')
     _EXIT_PROJECT_LOCATOR = (By.CSS_SELECTOR, '.exit-project-icon')
@@ -86,12 +85,6 @@ class AppBar(PagePiece):
             locator=self._ABOUT_BUTTON_LOCATOR,
             driver=driver,
             description="The button at the extreme left of the expanded App Bar, which opens an info modal.",
-            timeout=0)
-        self._about_button_local_symbol = ComponentPiece(
-            locator=self._ABOUT_BUTTON_LOCAL_SYMBOL_LOCATOR,
-            driver=driver,
-            parent_locator_list=self._about_button.locator_list,
-            description="The icon used within the 'About' button within the expanded App Bar.",
             timeout=0)
         self._about_panel = ComponentPiece(
             locator=self._ABOUT_MODAL_AND_SESSION_STATUS_MODAL_LOCATOR,
@@ -629,16 +622,17 @@ class AppBar(PagePiece):
         """
         Obtain the path of the icon in use for the 'About' button.
 
+        Ensures the app bar is expanded, then retrieves the SVG icon path:
+        - If the data-icon attribute is present, its value (a custom icon path) is returned.
+        - If the default icon is used, the function returns None.
+
         :returns: The path in use by the <svg> of the 'About' button.
 
         :raises AssertionError: If unsuccessful in expanding the App Bar.
         """
         self._expand_app_bar_if_not_expanded()
-        try:
-            # Not using the standard icon structure because it isn't technically a Perspective component
-            return self._about_button_local_symbol.find(timeout=0).get_attribute("id")
-        except TimeoutException:
-            return self._about_button.get_icon_name()
+        # Not using the standard icon structure because it isn't technically a Perspective component
+        return self._about_button.find(timeout=0).get_attribute("data-icon")
 
     def get_logged_in_user(self) -> Optional[str]:
         """
