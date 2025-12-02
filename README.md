@@ -1,3 +1,5 @@
+**Note: `main` branch is considered deprecated and all future changes will be made to either the `8.1` or `8.3` branch as appropriate.  Please track a different branch going forward**
+
 # Perspective Project Automation
 The content located in this repo is intended to assist with automated testing of Perspective Sessions. It consists of 
 various libraries used to interact with all levels of Sessions - from Components to Pages and any pieces of those pages.
